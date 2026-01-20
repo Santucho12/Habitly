@@ -1,73 +1,73 @@
 
 
-import { useState, useEffect } from 'react';
-import './App.css';
-import { db } from './firebase';
-import { ref, push, onValue } from 'firebase/database';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { Link, Routes, Route, Navigate } from 'react-router-dom';
+import { auth } from './services/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
 
-const USERS = ['Yo', 'Mi amigo'];
+const AuthContext = createContext();
 
-function App() {
-  const [visits, setVisits] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(USERS[0]);
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
-  // Escuchar cambios en la base de datos en tiempo real
+function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const visitsRef = ref(db, 'visits');
-    const unsubscribe = onValue(visitsRef, (snapshot) => {
-      const data = snapshot.val();
-      const arr = data ? Object.values(data) : [];
-      setVisits(arr);
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setLoading(false);
     });
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  const handleRegister = () => {
-    const visitsRef = ref(db, 'visits');
-    push(visitsRef, {
-      user: selectedUser,
-      date: new Date().toISOString()
-    });
-  };
+  const logout = () => signOut(auth);
 
   return (
-    <div className="container">
-      <h1>Registro de Gimnasio</h1>
-      <div className="register-section">
-        <label>
-          ¿Quién fue?
-          <select value={selectedUser} onChange={e => setSelectedUser(e.target.value)}>
-            {USERS.map(u => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
-        </label>
-        <button onClick={handleRegister}>Registrar visita</button>
-      </div>
-
-      <h2>Estadísticas</h2>
-      <ul className="stats-list">
-        {USERS.map(u => {
-          const count = visits.filter(v => v.user === u).length;
-          return (
-            <li key={u}>
-              {u}: <b>{count}</b> visita{count !== 1 ? 's' : ''}
-            </li>
-          );
-        })}
-      </ul>
-
-      <h2>Historial de visitas</h2>
-      <ul className="visit-list">
-        {visits.length === 0 && <li>No hay visitas registradas.</li>}
-        {visits.map((v, i) => (
-          <li key={i}>
-            {v.user} — {new Date(v.date).toLocaleString()}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <AuthContext.Provider value={{ user, loading, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
-export default App;
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-8">Cargando...</div>;
+  if (!user) return <Navigate to="/login" />;
+  return children;
+}
+
+export default function App() {
+  const { user, logout } = useAuth() || {};
+  return (
+    <AuthProvider>
+      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-md mx-auto">
+          <nav className="flex gap-4 p-4 bg-gray-800 rounded-t-xl">
+            <Link to="/login" className="hover:underline">Login</Link>
+            <Link to="/register" className="hover:underline">Registro</Link>
+            <Link to="/dashboard" className="hover:underline">Dashboard</Link>
+            {user && (
+              <button onClick={logout} className="ml-4 bg-red-600 px-2 py-1 rounded hover:bg-red-700">Logout</button>
+            )}
+          </nav>
+          <div className="bg-gray-900 rounded-b-xl shadow-xl">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+              <Route path="*" element={<Navigate to="/login" />} />
+            </Routes>
+          </div>
+        </div>
+      </div>
+    </AuthProvider>
+  );
+}
+
+
