@@ -11,6 +11,12 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+:root {
+  /* Tailwind base styles */
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 }
 
 a {
