@@ -7,6 +7,8 @@ import { actualizarRacha } from '../../utils/streaks';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import dayjs from 'dayjs';
+import weekOfYear from 'dayjs/plugin/weekOfYear';
+dayjs.extend(weekOfYear);
 
 const ACTIVITIES = [
   { key: 'gym', label: 'Gimnasio', points: 10 },
