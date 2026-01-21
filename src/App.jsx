@@ -1,5 +1,3 @@
-
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Link, Routes, Route, Navigate } from 'react-router-dom';
 import { auth } from './services/firebase';
@@ -46,17 +44,9 @@ export default function App() {
   const { user, logout } = useAuth() || {};
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center">
-        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-md mx-auto">
-          <nav className="flex gap-4 p-4 bg-gray-800 rounded-t-xl">
-            <Link to="/login" className="hover:underline">Login</Link>
-            <Link to="/register" className="hover:underline">Registro</Link>
-            <Link to="/dashboard" className="hover:underline">Dashboard</Link>
-            {user && (
-              <button onClick={logout} className="ml-4 bg-red-600 px-2 py-1 rounded hover:bg-red-700">Logout</button>
-            )}
-          </nav>
-          <div className="bg-gray-900 rounded-b-xl shadow-xl">
+      <div className="min-h-screen min-w-screen bg-gray-900 text-white">
+        <div className="w-[400px] min-h-screen flex flex-col mx-auto">
+          <div className="bg-gray-900 rounded-b-xl shadow-xl flex-1 flex flex-col">
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -69,5 +59,6 @@ export default function App() {
     </AuthProvider>
   );
 }
+
 
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -17,6 +18,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -45,6 +47,9 @@ export default function Register() {
         notificaciones: true
       });
       setSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 1200);
     } catch (e) {
       setError(e.message);
     } finally {
