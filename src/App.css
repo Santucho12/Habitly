@@ -1,8 +1,57 @@
+@keyframes fadein {
+  0% { opacity: 0; transform: translateY(24px) scale(0.98); }
+  100% { opacity: 1; transform: none; }
+}
+.animate-fadein {
+  animation: fadein 0.5s cubic-bezier(.39,.575,.565,1) both;
+}
+/* Animaciones y feedback visual */
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+.card, .bg-gray-800, .bg-gray-900 {
+  transition: box-shadow 0.3s, transform 0.2s;
+}
+.card:hover, .bg-gray-800:hover, .bg-gray-900:hover {
+  box-shadow: 0 8px 32px 0 rgba(34,197,94,0.15), 0 1.5px 4px 0 rgba(37,99,235,0.10);
+  transform: translateY(-2px) scale(1.01);
+}
+
+button, .btn, .sidebar-btn {
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+button:active, .btn:active, .sidebar-btn:active {
+  transform: scale(0.97);
+}
+
+.sidebar-btn {
+  border-radius: 50%;
+  padding: 0.5em;
+  background: transparent;
+}
+.sidebar-btn.selected, .sidebar-btn:focus {
+  background: #2563eb22;
+  color: #2563eb;
+  outline: none;
+}
+
+/* Feedback para inputs */
+input:focus, select:focus {
+  outline: 2px solid #2563eb;
+  box-shadow: 0 0 0 2px #2563eb44;
+}
+
+/* Animación de aparición */
+.fade-in {
+  animation: fadeIn 0.7s cubic-bezier(.39,.575,.565,1) both;
+}
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(16px) scale(0.98); }
+  100% { opacity: 1; transform: none; }
 }
 
 .logo {

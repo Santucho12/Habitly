@@ -1,10 +1,20 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import ThemeProvider from './components/ThemeProvider';
 import { Link, Routes, Route, Navigate } from 'react-router-dom';
 import { auth } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
+import Layout from './components/Layout/Layout';
+import ChecklistPage from './pages/Checklist';
+import MealsPage from './pages/Meals';
+import ProgressPage from './pages/Progress';
+import RankingPage from './pages/Ranking';
+import StatsPage from './pages/Stats';
+import ProfilePage from './pages/Profile';
+import AchievementsPage from './pages/Achievements';
 
 const AuthContext = createContext();
 
@@ -41,22 +51,35 @@ function PrivateRoute({ children }) {
 }
 
 export default function App() {
-  const { user, logout } = useAuth() || {};
   return (
-    <AuthProvider>
-      <div className="min-h-screen min-w-screen bg-gray-900 text-white">
-        <div className="w-[400px] min-h-screen flex flex-col mx-auto">
-          <div className="bg-gray-900 rounded-b-xl shadow-xl flex-1 flex flex-col">
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-              <Route path="*" element={<Navigate to="/login" />} />
-            </Routes>
-          </div>
-        </div>
-      </div>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/*"
+            element={
+              <PrivateRoute>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/checklist" element={<ChecklistPage />} />
+                    <Route path="/meals" element={<MealsPage />} />
+                    <Route path="/progress" element={<ProgressPage />} />
+                    <Route path="/ranking" element={<RankingPage />} />
+                    <Route path="/stats" element={<StatsPage />} />
+                    <Route path="/achievements" element={<AchievementsPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                  </Routes>
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1,0 +1,6 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="96" height="96" rx="24" fill="#1e293b"/>
+  <circle cx="48" cy="40" r="16" fill="#2563eb"/>
+  <rect x="24" y="64" width="48" height="12" rx="6" fill="#64748b"/>
+  <text x="48" y="90" text-anchor="middle" fill="#94a3b8" font-size="10">Sin hábitos</text>
+</svg>

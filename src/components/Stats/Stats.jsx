@@ -56,10 +56,20 @@ export default function Stats({ month, year }) {
     ],
   };
 
+  const sinDatos = !data.gym && !data.correr && !data.caminar;
+
   return (
     <div className="bg-gray-800 rounded-xl p-4 mb-6">
       <h3 className="text-lg font-bold mb-2">Estadísticas del mes</h3>
-      <Bar data={chartData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+      {sinDatos ? (
+        <div className="text-gray-400 text-center mt-8">
+          <img src="/src/assets/images/empty-habits.svg" alt="Sin estadísticas" className="mx-auto mb-4 w-24 h-24 opacity-80" />
+          <div className="font-semibold">¡Aún no tienes estadísticas este mes!</div>
+          <div className="text-sm text-gray-400">Marca actividades para ver tu progreso aquí.</div>
+        </div>
+      ) : (
+        <Bar data={chartData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+      )}
     </div>
   );
 }

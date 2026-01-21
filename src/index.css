@@ -1,3 +1,28 @@
+@keyframes ranking-up {
+  0% { box-shadow: 0 0 0 0 #facc15; background-color: #facc15; }
+  40% { box-shadow: 0 0 16px 8px #facc15; background-color: #facc15; }
+  100% { box-shadow: 0 0 0 0 transparent; background-color: #2563eb; }
+}
+.animate-ranking-up {
+  animation: ranking-up 1.2s cubic-bezier(.4,2,.3,1);
+}
+
+@keyframes achievement-banner {
+  0% { opacity: 0; transform: translateY(-40px) scale(0.95); }
+  60% { opacity: 1; transform: translateY(0) scale(1.05); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-achievement-banner {
+  animation: achievement-banner 0.7s cubic-bezier(.4,2,.3,1);
+}
+
+@keyframes progress-bar {
+  0% { width: 0; }
+  100% { width: 100%; }
+}
+.animate-progress-bar {
+  animation: progress-bar 1.2s cubic-bezier(.4,2,.3,1);
+}
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
