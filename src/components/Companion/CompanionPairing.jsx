@@ -60,14 +60,6 @@ export default function CompanionPairing() {
   return (
     <div className="max-w-md mx-auto p-4 bg-white rounded shadow">
       <h2 className="text-xl font-bold mb-2">Emparejamiento con compañero</h2>
-      <div className="mb-4">
-        <label className="block text-sm font-medium">Tu código para compartir:</label>
-        <div className="font-mono bg-gray-100 p-2 rounded select-all">{myCode}</div>
-        <div className="flex justify-center my-2">
-          <QRCode value={myCode} size={96} />
-        </div>
-        <p className="text-xs text-gray-500">Comparte este código o QR con tu compañero para que te agregue.</p>
-      </div>
       <form onSubmit={handlePair} className="mb-2">
         <label className="block text-sm font-medium">Código de tu compañero:</label>
         <input

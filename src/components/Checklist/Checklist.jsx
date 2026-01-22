@@ -24,15 +24,57 @@ export default function Checklist() {
   const [error, setError] = useState('');
   const today = dayjs().format('YYYY-MM-DD');
   const weekNumber = dayjs().week();
+  const [weekActivities, setWeekActivities] = useState([]); // [{date, gym, correr, caminar}]
+  const [monthActivities, setMonthActivities] = useState([]); // [{date, gym, correr, caminar}]
+  const [showMonth, setShowMonth] = useState(false);
+  // Estados para el formulario de nuevo hábito
+  const [newHabitName, setNewHabitName] = useState('');
+  const [newHabitType, setNewHabitType] = useState('gym');
+  const [newHabitMeta, setNewHabitMeta] = useState(1);
+  const [addHabitError, setAddHabitError] = useState('');
+  const [addHabitSuccess, setAddHabitSuccess] = useState('');
 
   useEffect(() => {
-    if (user) {
-      getHabitsByUser(user.uid).then(setHabits);
-      getDailyActivity(user.uid, today).then((data) => {
-        setChecked(data || {});
-        setLoading(false);
-      });
+    async function fetchWeekAndMonth() {
+      if (!user) return;
+      const habitsData = await getHabitsByUser(user.uid);
+      setHabits(habitsData);
+      const todayData = await getDailyActivity(user.uid, today);
+      setChecked(todayData || {});
+      // Semana
+      const weekStart = dayjs().startOf('week');
+      let weekArr = [];
+      for (let i = 0; i < 7; i++) {
+        const d = weekStart.add(i, 'day').format('YYYY-MM-DD');
+        // eslint-disable-next-line no-await-in-loop
+        const act = await getDailyActivity(user.uid, d);
+        weekArr.push({
+          date: d,
+          gym: act?.gym || false,
+          correr: act?.correr || false,
+          caminar: act?.caminar || false,
+        });
+      }
+      setWeekActivities(weekArr);
+      // Mes
+      const monthStart = dayjs().startOf('month');
+      const daysInMonth = dayjs().daysInMonth();
+      let monthArr = [];
+      for (let i = 0; i < daysInMonth; i++) {
+        const d = monthStart.add(i, 'day').format('YYYY-MM-DD');
+        // eslint-disable-next-line no-await-in-loop
+        const act = await getDailyActivity(user.uid, d);
+        monthArr.push({
+          date: d,
+          gym: act?.gym || false,
+          correr: act?.correr || false,
+          caminar: act?.caminar || false,
+        });
+      }
+      setMonthActivities(monthArr);
+      setLoading(false);
     }
+    fetchWeekAndMonth();
   }, [user, today]);
 
   const handleCheck = async (key) => {
@@ -98,22 +140,259 @@ export default function Checklist() {
   if (loading) return <div>Cargando check-list...</div>;
 
   return (
-    <div className="bg-gray-700 rounded-xl p-4 mb-6">
-      <h3 className="text-lg font-bold mb-2">Check-list diaria de actividades</h3>
-      <div className="flex flex-col gap-2">
-        {ACTIVITIES.map(act => (
-          <label key={act.key} className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={!!checked[act.key]}
-              onChange={() => handleCheck(act.key)}
-              disabled={!!checked[act.key]}
-            />
-            <span>{act.label}</span>
-          </label>
-        ))}
+    <div className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-5 mb-8 shadow-xl">
+      <h3 className="text-2xl font-extrabold mb-4 text-blue-300 text-center drop-shadow">Check-list diaria de actividades</h3>
+      <div className="flex flex-col gap-4 mb-6">
+        {ACTIVITIES.map(act => {
+          const daysDone = weekActivities.filter(d => d[act.key]).length;
+          // Buscar meta semanal para la actividad
+          const habit = habits.find(h => h.type === act.key || h.name?.toLowerCase() === act.key);
+          const meta = habit?.meta || habit?.goal || 1;
+          // Color badge según actividad
+          let badgeColor = '';
+          if (act.key === 'gym') badgeColor = 'bg-green-500';
+          else if (act.key === 'caminar') badgeColor = 'bg-cyan-300';
+          else if (act.key === 'correr') badgeColor = 'bg-blue-500';
+          return (
+            <div key={act.key} className="flex items-center justify-between bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-3 mb-1 shadow-lg border border-gray-700">
+              <div className="flex items-center gap-3">
+                {/* Iconos grandes */}
+                {act.key === 'gym' && <span role="img" aria-label="Gimnasio" className="text-2xl">🏋️‍♂️</span>}
+                {act.key === 'correr' && <span role="img" aria-label="Correr" className="text-2xl">🏃‍♂️</span>}
+                {act.key === 'caminar' && <span role="img" aria-label="Caminar" className="text-2xl">🚶‍♂️</span>}
+                <input
+                  type="checkbox"
+                  checked={!!checked[act.key]}
+                  onChange={() => handleCheck(act.key)}
+                  disabled={!!checked[act.key]}
+                  className={`w-6 h-6 transition-all duration-200 ${
+                    act.key === 'gym' ? 'accent-green-500' :
+                    act.key === 'correr' ? 'accent-blue-500' :
+                    act.key === 'caminar' ? 'accent-cyan-300' : 'accent-blue-500'
+                  }`}
+                />
+                <span className="font-bold text-white text-lg tracking-wide">{act.label}</span>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow">+{act.points} pts</span>
+                <span className={`${badgeColor} text-white text-xs px-2 py-1 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
-      {error && <div className="text-red-400 text-sm mt-2">{error}</div>}
+      {/* Mensaje motivacional o error estilizado */}
+      {error && <div className="bg-red-100 border border-red-400 text-red-700 text-sm rounded-lg px-3 py-2 mb-2 text-center font-semibold shadow">{error}</div>}
+      {/* Calendario semanal debajo del checklist */}
+      <div className="mt-8">
+        <h4 className="text-lg font-bold text-blue-400 mb-3 text-center">Calendario {showMonth ? 'mensual' : 'semanal'}</h4>
+        <div className="flex justify-center mb-4">
+          <button
+            className="px-3 py-1 rounded bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700 transition"
+            onClick={() => setShowMonth((v) => !v)}
+          >
+            {showMonth ? 'Ver semana' : 'Ver mes completo'}
+          </button>
+        </div>
+        <div className={`flex flex-col items-center mb-6`} style={showMonth ? {maxWidth: '370px'} : {}}>
+          {showMonth
+            ? (() => {
+                // ...existing code for month view...
+                const weeks = [];
+                for (let i = 0; i < monthActivities.length; i += 7) {
+                  weeks.push(monthActivities.slice(i, i + 7));
+                }
+                return weeks.map((week, wi) => (
+                  <div key={wi} className="flex flex-row justify-center gap-2 mb-2">
+                    {/* ...existing code for each day in month view... */}
+                    {week.map((act, i) => {
+                      // ...existing code...
+                      const weekDayLetter = ['L','M','M','J','V','S','D'][dayjs(act.date).day()];
+                      const colors = [];
+                      if (act.gym) colors.push('#22c55e');
+                      if (act.correr) colors.push('#3b82f6');
+                      if (act.caminar) colors.push('#67e8f9');
+                      let customBg = {};
+                      let label = '';
+                      if (colors.length === 0) {
+                        customBg = { backgroundColor: '#181e2a' };
+                      } else if (colors.length === 1) {
+                        customBg = { backgroundColor: colors[0] };
+                        label = act.gym ? 'G' : act.correr ? 'R' : 'C';
+                      } else {
+                        const percent = 100 / colors.length;
+                        let gradient = 'conic-gradient(';
+                        colors.forEach((c, idx) => {
+                          const start = percent * idx;
+                          const end = percent * (idx + 1);
+                          gradient += `${c} ${start}%, ${c} ${end}%, `;
+                        });
+                        gradient = gradient.slice(0, -2) + ')';
+                        customBg = { background: gradient };
+                        label = '';
+                      }
+                      return (
+                        <div key={i + wi * 7} className="flex flex-col items-center w-10 group">
+                          <span className="text-xs text-white mb-1 font-bold drop-shadow">{weekDayLetter}</span>
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-white shadow-lg border-2 border-white group-hover:scale-110 transition-transform duration-200`}
+                            style={customBg}
+                            title={colors.length === 0 ? 'Sin actividades' : colors.length === 1 ? (act.gym ? 'Gimnasio' : act.correr ? 'Correr' : 'Caminar') : 'Múltiples actividades'}
+                          >
+                            {label}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ));
+              })()
+            : (
+                <div className="flex flex-row justify-center gap-4">
+                  {/* Semana horizontal: cada día de izquierda a derecha */}
+                  {[...Array(7)].map((_, i) => {
+                    const day = dayjs().startOf('week').add(i, 'day');
+                    const weekDay = ['L','M','M','J','V','S','D'][i];
+                    const act = weekActivities[i] || {};
+                    const colors = [];
+                    if (act.gym) colors.push('#22c55e');
+                    if (act.correr) colors.push('#3b82f6');
+                    if (act.caminar) colors.push('#67e8f9');
+                    let customBg = {};
+                    let label = '';
+                    if (colors.length === 0) {
+                      customBg = { backgroundColor: '#181e2a' };
+                    } else if (colors.length === 1) {
+                      customBg = { backgroundColor: colors[0] };
+                      label = act.gym ? 'G' : act.correr ? 'R' : 'C';
+                    } else {
+                      const percent = 100 / colors.length;
+                      let gradient = 'conic-gradient(';
+                      colors.forEach((c, idx) => {
+                        const start = percent * idx;
+                        const end = percent * (idx + 1);
+                        gradient += `${c} ${start}%, ${c} ${end}%, `;
+                      });
+                      gradient = gradient.slice(0, -2) + ')';
+                      customBg = { background: gradient };
+                      label = '';
+                    }
+                    return (
+                      <div key={i} className="flex flex-col items-center w-12 group">
+                        <span className="text-base text-white mb-2 font-bold drop-shadow">{weekDay}</span>
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center font-extrabold text-white shadow-lg border-2 border-white group-hover:scale-110 transition-transform duration-200`}
+                          style={customBg}
+                          title={colors.length === 0 ? 'Sin actividades' : colors.length === 1 ? (act.gym ? 'Gimnasio' : act.correr ? 'Correr' : 'Caminar') : 'Múltiples actividades'}
+                        >
+                          {label}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+        </div>
+        {/* Barra de progreso semanal */}
+        {!showMonth && (() => {
+          // Sumar metas semanales de todas las actividades
+          let totalMeta = 0;
+          let totalDone = 0;
+          ACTIVITIES.forEach(act => {
+            const habit = habits.find(h => h.type === act.key || h.name?.toLowerCase() === act.key);
+            const meta = habit?.meta || habit?.goal || 1;
+            totalMeta += meta;
+            const done = weekActivities.filter(d => d[act.key]).length;
+            totalDone += done;
+          });
+          const percent = totalMeta > 0 ? Math.round((totalDone / totalMeta) * 100) : 0;
+          return (
+            <div className="w-full px-2">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm text-gray-200 font-semibold">Progreso semanal</span>
+                <span className="text-sm text-blue-400 font-bold">{totalDone}/{totalMeta} ({percent}%)</span>
+              </div>
+              <div className="w-full h-4 bg-gray-600 rounded-full overflow-hidden shadow">
+                <div
+                  className="h-4 bg-gradient-to-r from-green-400 via-blue-400 to-blue-600 rounded-full transition-all duration-500"
+                  style={{ width: `${percent}%` }}
+                ></div>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+    {/* Formulario para agregar hábito */}
+    <div className="mt-8 bg-gray-900 rounded-xl p-4 shadow-lg">
+      <h4 className="text-lg font-bold text-blue-400 mb-3 text-center">Agregar nuevo hábito</h4>
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setAddHabitError('');
+          setAddHabitSuccess('');
+          if (!newHabitName.trim()) {
+            setAddHabitError('El nombre es obligatorio.');
+            return;
+          }
+          if (!user) {
+            setAddHabitError('Usuario no autenticado.');
+            return;
+          }
+          try {
+            const habitObj = {
+              userId: user.uid,
+              name: newHabitName.trim(),
+              type: newHabitType,
+              meta: Number(newHabitMeta) || 1,
+              createdAt: new Date().toISOString(),
+            };
+            await setDoc(doc(db, 'habits', `${user.uid}_${newHabitType}`), habitObj, { merge: true });
+            setAddHabitSuccess('¡Hábito agregado!');
+            setNewHabitName('');
+            setNewHabitType('gym');
+            setNewHabitMeta(1);
+            const habitsData = await getHabitsByUser(user.uid);
+            setHabits(habitsData);
+          } catch (err) {
+            setAddHabitError('Error al guardar el hábito.');
+          }
+        }}
+      >
+        <input
+          type="text"
+          className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Nombre del hábito"
+          value={newHabitName}
+          onChange={e => setNewHabitName(e.target.value)}
+        />
+        <select
+          className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none"
+          value={newHabitType}
+          onChange={e => setNewHabitType(e.target.value)}
+        >
+          <option value="gym">Gimnasio</option>
+          <option value="correr">Correr</option>
+          <option value="caminar">Caminar</option>
+        </select>
+        <input
+          type="number"
+          min={1}
+          className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none"
+          placeholder="Meta semanal"
+          value={newHabitMeta}
+          onChange={e => setNewHabitMeta(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="bg-green-600 text-white font-bold py-2 rounded shadow hover:bg-green-700 transition"
+        >
+          Agregar hábito
+        </button>
+        {addHabitError && <div className="text-red-400 text-sm font-semibold text-center mt-2">{addHabitError}</div>}
+        {addHabitSuccess && <div className="text-green-400 text-sm font-semibold text-center mt-2">{addHabitSuccess}</div>}
+      </form>
+    </div>
     </div>
   );
 }

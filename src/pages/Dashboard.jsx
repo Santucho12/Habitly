@@ -95,7 +95,7 @@ export default function Dashboard() {
   }
   return (
     <div className="min-h-screen w-full flex justify-center items-center bg-gray-900">
-      <div className="w-[400px] min-h-screen bg-gray-900 p-4 flex flex-col justify-center">
+      <div className="w-[280px] min-h-screen bg-gray-900 p-4 flex flex-col justify-center">
         <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
         <p>¡Bienvenido a tu panel de hábitos!</p>
         {user && (

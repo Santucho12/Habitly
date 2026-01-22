@@ -6,6 +6,7 @@ import * as yup from 'yup';
 import { auth, db } from '../services/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import AppLogo from '../assets/icons/AppLogo';
 
 const schema = yup.object().shape({
   displayName: yup.string().required('Nombre es requerido'),
@@ -48,7 +49,7 @@ export default function Register() {
       });
       setSuccess(true);
       setTimeout(() => {
-        navigate('/login');
+        navigate('/');
       }, 1200);
     } catch (e) {
       setError(e.message);
@@ -58,30 +59,61 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
-      <h2 className="text-2xl font-bold mb-4">Registro</h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-800 p-6 rounded shadow-md w-full max-w-sm">
-        <div className="mb-4">
-          <label className="block mb-1">Nombre</label>
-          <input {...register('displayName')} className="w-full px-3 py-2 rounded text-black" />
-          {errors.displayName && <p className="text-red-400 text-sm">{errors.displayName.message}</p>}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="w-full min-w-[400px] mx-auto p-0">
+        <div className="flex flex-col items-center mb-6">
+          <AppLogo size={56} />
+          <h2 className="text-3xl font-bold mt-2 mb-2 text-gray-900 dark:text-white">Registro</h2>
         </div>
-        <div className="mb-4">
-          <label className="block mb-1">Email</label>
-          <input {...register('email')} className="w-full px-3 py-2 rounded text-black" />
-          {errors.email && <p className="text-red-400 text-sm">{errors.email.message}</p>}
-        </div>
-        <div className="mb-4">
-          <label className="block mb-1">Contraseña</label>
-          <input type="password" {...register('password')} className="w-full px-3 py-2 rounded text-black" />
-          {errors.password && <p className="text-red-400 text-sm">{errors.password.message}</p>}
-        </div>
-        <button type="submit" className="bg-blue-600 px-4 py-2 rounded w-full hover:bg-blue-700 disabled:opacity-50" disabled={loading}>
-          {loading ? 'Registrando...' : 'Registrarse'}
-        </button>
-        {error && <div className="text-red-400 mt-2">{error}</div>}
-        {success && <div className="text-green-400 mt-2">¡Registro exitoso!</div>}
-      </form>
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-white dark:bg-gray-800 shadow-lg rounded-xl px-8 py-8 animate-fadein">
+          <div className="mb-6 relative">
+            <input
+              {...register('displayName')}
+              id="displayName"
+              className={`peer w-full px-3 pt-6 pb-2 border border-gray-300 dark:border-gray-700 rounded-md bg-transparent text-gray-900 dark:text-white focus:outline-none focus:border-blue-600 transition-all`}
+              autoComplete="off"
+            />
+            <label htmlFor="displayName" className="absolute left-3 top-2 text-gray-500 dark:text-gray-400 text-sm transition-all peer-focus:text-xs peer-focus:-top-2 peer-focus:text-blue-600 peer-placeholder-shown:text-base peer-placeholder-shown:top-6 peer-placeholder-shown:text-gray-500 pointer-events-none bg-white dark:bg-gray-800 px-1">
+              Nombre
+            </label>
+            {errors.displayName && <p className="text-red-500 text-xs mt-1">{errors.displayName.message}</p>}
+          </div>
+          <div className="mb-6 relative">
+            <input
+              {...register('email')}
+              id="email"
+              className={`peer w-full px-3 pt-6 pb-2 border border-gray-300 dark:border-gray-700 rounded-md bg-transparent text-gray-900 dark:text-white focus:outline-none focus:border-blue-600 transition-all`}
+              autoComplete="off"
+            />
+            <label htmlFor="email" className="absolute left-3 top-2 text-gray-500 dark:text-gray-400 text-sm transition-all peer-focus:text-xs peer-focus:-top-2 peer-focus:text-blue-600 peer-placeholder-shown:text-base peer-placeholder-shown:top-6 peer-placeholder-shown:text-gray-500 pointer-events-none bg-white dark:bg-gray-800 px-1">
+              Email
+            </label>
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+          </div>
+          <div className="mb-6 relative">
+            <input
+              type="password"
+              {...register('password')}
+              id="password"
+              className={`peer w-full px-3 pt-6 pb-2 border border-gray-300 dark:border-gray-700 rounded-md bg-transparent text-gray-900 dark:text-white focus:outline-none focus:border-blue-600 transition-all`}
+              autoComplete="off"
+            />
+            <label htmlFor="password" className="absolute left-3 top-2 text-gray-500 dark:text-gray-400 text-sm transition-all peer-focus:text-xs peer-focus:-top-2 peer-focus:text-blue-600 peer-placeholder-shown:text-base peer-placeholder-shown:top-6 peer-placeholder-shown:text-gray-500 pointer-events-none bg-white dark:bg-gray-800 px-1">
+              Contraseña
+            </label>
+            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+          </div>
+          <button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-md w-full shadow-md transition-colors disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? 'Registrando...' : 'Registrarse'}
+          </button>
+          {error && <div className="text-red-500 mt-3 text-center text-sm">{error}</div>}
+          {success && <div className="text-green-500 mt-3 text-center text-sm">¡Registro exitoso!</div>}
+        </form>
+      </div>
     </div>
   );
 }

@@ -1,22 +1,69 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useAuth } from '../App';
-import CompanionPairing from '../components/Companion/CompanionPairing';
+// import CompanionPairing from '../components/Companion/CompanionPairing';
+import { uploadProfilePhoto } from '../services/storage';
+import { updateProfile } from 'firebase/auth';
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const fileInputRef = useRef();
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+  const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
 
   if (!user) return <div className="text-white">Cargando...</div>;
 
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const url = await uploadProfilePhoto(user.uid, file);
+      await updateProfile(user, { photoURL: url });
+      setPhotoURL(url);
+    } catch (err) {
+      setError('Error al subir la foto');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
-    <div className="max-w-md mx-auto mt-10 bg-gray-800 rounded-2xl shadow-lg p-6">
+    <div className="w-[360px] mx-auto mt-10 bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col items-center">
       <h2 className="text-2xl font-bold text-blue-300 mb-4 text-center">Perfil de usuario</h2>
       <div className="flex flex-col items-center mb-6">
-        <img
-          src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=0D8ABC&color=fff`}
-          alt="avatar"
-          className="w-24 h-24 rounded-full border-4 border-blue-400 mb-2 shadow"
-        />
-        <div className="text-xl font-semibold text-white">{user.displayName || 'Sin nombre'}</div>
+        <div className="relative group">
+          <img
+            src={photoURL || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=0D8ABC&color=fff`}
+            alt="avatar"
+            className="w-24 h-24 rounded-full border-4 border-blue-400 mb-2 shadow object-cover"
+          />
+          <button
+            type="button"
+            className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow transition-opacity opacity-80 group-hover:opacity-100"
+            onClick={() => fileInputRef.current.click()}
+            aria-label="Cambiar foto de perfil"
+            disabled={uploading}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 01.75-.75h9a.75.75 0 01.75.75v6a2.25 2.25 0 01-2.25 2.25H9A2.25 2.25 0 016.75 18v-6z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75a3 3 0 100-6 3 3 0 000 6z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 9.75V7.5A2.25 2.25 0 0014.25 5.25h-4.5A2.25 2.25 0 007.5 7.5v2.25" />
+            </svg>
+          </button>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handlePhotoChange}
+            disabled={uploading}
+          />
+        </div>
+        {uploading && <div className="text-blue-400 text-xs mt-2">Subiendo foto...</div>}
+        {error && <div className="text-red-400 text-xs mt-2">{error}</div>}
+        <div className="text-xl font-semibold text-white mt-2">{user.displayName || 'Sin nombre'}</div>
         <div className="text-gray-400">{user.email}</div>
       </div>
       <button
@@ -25,10 +72,7 @@ export default function Profile() {
       >
         Cerrar sesión
       </button>
-      <div className="mb-2">
-        <h3 className="text-lg font-bold text-blue-200 mb-2">Compañero</h3>
-        <CompanionPairing />
-      </div>
+      {/* Sección de compañero eliminada */}
     </div>
   );
 }

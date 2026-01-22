@@ -25,7 +25,7 @@ export default function Login() {
     setError("");
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      navigate('/dashboard');
+      navigate('/');
     } catch (e) {
       setError("Usuario o contraseña incorrectos");
     } finally {

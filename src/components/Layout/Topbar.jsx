@@ -8,42 +8,23 @@ export default function Topbar() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   return (
-    <header className="bg-blue-900 text-white w-full py-4 px-6 flex items-center justify-between shadow" role="banner">
-      <div className="flex items-center gap-3">
-        <AppLogo size={36} />
-        <span className="font-bold text-lg tracking-wide">Habitly</span>
-        <span className="ml-2"><CompanionAvatar size={32} /></span>
+    <header className="w-full px-6 flex items-center justify-between bg-blue-900 shadow-md" style={{minHeight:'56px'}} role="banner">
+      <div className="w-1/4 flex items-center"></div>
+      <div className="w-1/2 flex justify-center">
+        <span className="font-bold text-2xl sm:text-2xl tracking-tight text-white" style={{letterSpacing:'0.01em', textShadow:'0 2px 8px #1e293b44'}}>
+          Habitly
+        </span>
       </div>
-      {user && (
-        <div className="relative flex items-center">
-          <button
-            className="flex items-center gap-2 focus:outline-none"
-            onClick={() => setOpen((v) => !v)}
-            aria-label="Menú de usuario"
-            aria-haspopup="true"
-            aria-expanded={open}
-            tabIndex={0}
-          >
-            <img
-              src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=0D8ABC&color=fff`}
-              alt="avatar usuario"
-              className="w-8 h-8 rounded-full border-2 border-blue-300"
-            />
-            <span className="hidden sm:inline font-semibold text-white text-base">{user.displayName || user.email}</span>
-          </button>
-          {open && (
-            <div className="absolute right-0 mt-2 w-40 bg-white text-gray-900 rounded shadow-lg z-50 fade-in" role="menu" aria-label="Opciones de usuario">
-              <div className="px-4 py-2 border-b font-semibold">{user.displayName || user.email}</div>
-              <button
-                onClick={logout}
-                className="w-full text-left px-4 py-2 hover:bg-blue-100 rounded-b"
-                role="menuitem"
-                tabIndex={0}
-              >Cerrar sesión</button>
-            </div>
-          )}
-        </div>
-      )}
+      <div className="w-1/4 flex justify-end items-center">
+        {user && (
+          <img
+            src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=0D8ABC&color=fff`}
+            alt="avatar usuario"
+            className="w-9 h-9 rounded-full border-2 border-blue-300 shadow-sm bg-white"
+            title={user.displayName || user.email}
+          />
+        )}
+      </div>
     </header>
   );
 }
