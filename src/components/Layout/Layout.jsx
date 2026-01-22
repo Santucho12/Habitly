@@ -18,7 +18,7 @@ export default function Layout({ children }) {
   };
   const activityName = routeNames[location.pathname] || '';
   return (
-    <div className="flex min-h-screen bg-gray-900">
+    <div className="flex min-h-screen bg-gray-900 overflow-x-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Topbar />
