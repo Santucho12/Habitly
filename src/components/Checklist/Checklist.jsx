@@ -203,7 +203,7 @@ export default function Checklist() {
                   weeks.push(monthActivities.slice(i, i + 7));
                 }
                 return weeks.map((week, wi) => (
-                  <div key={wi} className="flex flex-row justify-center gap-2 mb-2">
+                  <div key={wi} className="flex flex-row justify-center gap-1 sm:gap-2 mb-2 w-full overflow-x-auto">
                     {/* ...existing code for each day in month view... */}
                     {week.map((act, i) => {
                       // ...existing code...
@@ -248,7 +248,7 @@ export default function Checklist() {
                 ));
               })()
             : (
-                <div className="flex flex-row justify-center gap-4">
+                <div className="flex flex-row justify-center gap-2 sm:gap-4">
                   {/* Semana horizontal: cada día de izquierda a derecha */}
                   {[...Array(7)].map((_, i) => {
                     const day = dayjs().startOf('week').add(i, 'day');
@@ -278,10 +278,10 @@ export default function Checklist() {
                       label = '';
                     }
                     return (
-                      <div key={i} className="flex flex-col items-center w-12 group">
-                        <span className="text-base text-white mb-2 font-bold drop-shadow">{weekDay}</span>
+                      <div key={i} className="flex flex-col items-center w-8 h-14 sm:w-12 group">
+                        <span className="text-xs sm:text-base text-white mb-1 sm:mb-2 font-bold drop-shadow">{weekDay}</span>
                         <div
-                          className={`w-12 h-12 rounded-full flex items-center justify-center font-extrabold text-white shadow-lg border-2 border-white group-hover:scale-110 transition-transform duration-200`}
+                          className={`w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-extrabold text-white shadow-lg border-2 border-white group-hover:scale-110 transition-transform duration-200`}
                           style={customBg}
                           title={colors.length === 0 ? 'Sin actividades' : colors.length === 1 ? (act.gym ? 'Gimnasio' : act.correr ? 'Correr' : 'Caminar') : 'Múltiples actividades'}
                         >
@@ -307,12 +307,12 @@ export default function Checklist() {
           });
           const percent = totalMeta > 0 ? Math.round((totalDone / totalMeta) * 100) : 0;
           return (
-            <div className="w-full px-2">
+            <div className="w-full max-w-full px-2">
               <div className="flex justify-between mb-1">
                 <span className="text-sm text-gray-200 font-semibold">Progreso semanal</span>
                 <span className="text-sm text-blue-400 font-bold">{totalDone}/{totalMeta} ({percent}%)</span>
               </div>
-              <div className="w-full h-4 bg-gray-600 rounded-full overflow-hidden shadow">
+              <div className="w-full h-4 bg-gray-600 rounded-full overflow-hidden shadow max-w-full">
                 <div
                   className="h-4 bg-gradient-to-r from-green-400 via-blue-400 to-blue-600 rounded-full transition-all duration-500"
                   style={{ width: `${percent}%` }}

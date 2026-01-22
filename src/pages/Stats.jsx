@@ -59,7 +59,7 @@ export default function StatsPage() {
   ];
 
   return (
-    <div className="max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-6 mt-8">
+    <div className="w-full max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-2 sm:p-6 mt-4 sm:mt-8">
       <h2 className="text-2xl font-bold text-blue-300 mb-4 text-center">Ranking mensual</h2>
       {/* 1. Tabla de posiciones con medallas */}
       <table className="w-full text-left bg-gray-900 rounded-xl overflow-hidden mb-6">
@@ -94,12 +94,12 @@ export default function StatsPage() {
       {/* 2. Puntos totales del mes (estética mejorada) */}
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-blue-400 mb-4 tracking-wide text-center">Puntos totales del mes</h3>
-        <div className="flex gap-6 justify-center">
-          <div className="bg-gradient-to-br from-blue-700 to-blue-900 shadow-lg rounded-2xl px-6 py-5 flex flex-col items-center w-44">
+          <div className="flex flex-row gap-1 sm:gap-4 justify-center w-full">
+            <div className="bg-gradient-to-br from-blue-700 to-blue-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-blue-200 text-lg mb-2">Tú</span>
             <span className="text-4xl font-bold text-white drop-shadow">340</span>
           </div>
-          <div className="bg-gradient-to-br from-green-700 to-green-900 shadow-lg rounded-2xl px-6 py-5 flex flex-col items-center w-44">
+            <div className="bg-gradient-to-br from-green-700 to-green-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-green-200 text-lg mb-2">Compañero</span>
             <span className="text-4xl font-bold text-white drop-shadow">296</span>
           </div>
@@ -109,8 +109,8 @@ export default function StatsPage() {
       {/* 3. Desglose de puntos (estética mejorada) */}
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-blue-400 mb-4 tracking-wide text-center">Desglose de puntos</h3>
-        <div className="flex gap-6 justify-center">
-          <div className="bg-gradient-to-br from-blue-600 to-blue-900 shadow-lg rounded-2xl px-6 py-5 flex flex-col items-center w-44">
+          <div className="flex flex-row gap-1 sm:gap-4 justify-center w-full">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-blue-200 text-lg mb-2">Tú</span>
             <ul className="text-white text-base font-medium space-y-1">
               <li>Hábitos: <span className="font-bold text-blue-300">{desgloseYo.habitos}</span></li>
@@ -119,7 +119,7 @@ export default function StatsPage() {
               <li>Logros: <span className="font-bold text-blue-300">{desgloseYo.logros}</span></li>
             </ul>
           </div>
-          <div className="bg-gradient-to-br from-green-600 to-green-900 shadow-lg rounded-2xl px-6 py-5 flex flex-col items-center w-44">
+            <div className="bg-gradient-to-br from-green-600 to-green-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-green-200 text-lg mb-2">Compañero</span>
             <ul className="text-white text-base font-medium space-y-1">
               <li>Hábitos: <span className="font-bold text-green-300">{desgloseCompa.habitos}</span></li>
@@ -134,8 +134,8 @@ export default function StatsPage() {
       {/* 7. Ranking histórico (estética mejorada) */}
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-blue-400 mb-4 tracking-wide text-center">Ranking histórico</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full min-w-[320px] text-left bg-gray-900 rounded-xl overflow-hidden">
             <thead>
               <tr className="bg-gray-700 text-blue-200 text-base">
                 <th className="py-3 px-4">Mes</th>

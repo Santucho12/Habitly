@@ -71,7 +71,7 @@ export default function ProgressPage() {
   return (
     <>
       {showBanner && <AchievementBanner message="¡Progreso mensual registrado!" onClose={() => setShowBanner(false)} />}
-      <div className="max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-6 mt-8" role="form" aria-labelledby="progress-title">
+      <div className="w-full max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-2 sm:p-6 mt-4 sm:mt-8" role="form" aria-labelledby="progress-title">
         <h2 id="progress-title" className="text-2xl font-bold text-blue-300 mb-2 text-center">Progreso mensual</h2>
         <div className="text-center text-blue-200 font-bold mb-4 text-lg">
           Mes actual: {dayjs(mes).format('MMMM YYYY')}
@@ -91,7 +91,7 @@ export default function ProgressPage() {
             <div className="text-sm text-gray-300 mt-2">Foto de este mes</div>
           </div>
         )}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4" aria-describedby="progress-desc">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full" aria-describedby="progress-desc">
           <span id="progress-desc" className="sr-only">Formulario para registrar tu peso y foto de progreso mensual</span>
           <label className="font-semibold" htmlFor="peso-input">Peso (kg):</label>
           <input
@@ -101,7 +101,7 @@ export default function ProgressPage() {
             value={peso}
             onChange={e => setPeso(e.target.value)}
             disabled={yaRegistrado}
-            className="rounded px-3 py-2 ml-2 text-black w-32"
+            className="rounded px-2 py-2 text-black w-full"
             aria-label="Peso en kilogramos"
             tabIndex={0}
           />
@@ -112,13 +112,13 @@ export default function ProgressPage() {
             accept="image/*"
             onChange={e => setFoto(e.target.files[0])}
             disabled={yaRegistrado}
-            className="ml-2"
+            className="w-full"
             aria-label="Subir foto de progreso"
             tabIndex={0}
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white rounded-xl px-4 py-2 mt-2 font-bold text-lg hover:bg-blue-700 disabled:bg-gray-500 transition"
+            className="bg-blue-600 text-white rounded-xl px-2 py-2 mt-2 font-bold text-lg hover:bg-blue-700 disabled:bg-gray-500 transition w-full"
             disabled={loading || yaRegistrado}
             aria-label={yaRegistrado ? 'Ya registrado' : loading ? 'Guardando progreso' : 'Guardar progreso'}
             tabIndex={0}
