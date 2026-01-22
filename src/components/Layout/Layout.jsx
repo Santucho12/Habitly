@@ -11,7 +11,7 @@ export default function Layout({ children }) {
     '/checklist': 'Check-list',
     '/meals': 'Comidas',
     '/progress': 'Progreso',
-    '/ranking': 'Ranking',
+    // '/ranking': 'Ranking',
     '/stats': 'Estadísticas',
     '/achievements': 'Logros',
     '/profile': 'Perfil',

@@ -10,7 +10,7 @@ export default function Sidebar({ children }) {
     { icon: '✅', label: 'Check-list', path: '/checklist' },
     { icon: '🍽️', label: 'Comidas', path: '/meals' },
     { icon: '📈', label: 'Progreso', path: '/progress' },
-    { icon: '🏆', label: 'Ranking', path: '/ranking' },
+    // { icon: '🏆', label: 'Ranking', path: '/ranking' },
     { icon: '📊', label: 'Estadísticas', path: '/stats' },
     { icon: '🥇', label: 'Logros', path: '/achievements' },
     { icon: '👤', label: 'Perfil', path: '/profile' },

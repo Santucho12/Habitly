@@ -10,6 +10,10 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
+  const [editing, setEditing] = useState(false);
+  const [newName, setNewName] = useState(user?.displayName || '');
+  const [newEmail, setNewEmail] = useState(user?.email || '');
+  const [editError, setEditError] = useState('');
 
   if (!user) return <div className="text-white">Cargando...</div>;
 
@@ -63,16 +67,56 @@ export default function Profile() {
         </div>
         {uploading && <div className="text-blue-400 text-xs mt-2">Subiendo foto...</div>}
         {error && <div className="text-red-400 text-xs mt-2">{error}</div>}
-        <div className="text-xl font-semibold text-white mt-2">{user.displayName || 'Sin nombre'}</div>
-        <div className="text-gray-400">{user.email}</div>
+        {!editing ? (
+          <>
+            <div className="text-xl font-semibold text-white mt-2">{user.displayName || 'Sin nombre'}</div>
+            <div className="text-gray-400">{user.email}</div>
+            <button
+              className="mt-2 px-4 py-1 bg-blue-700 text-white rounded hover:bg-blue-800 transition"
+              onClick={() => setEditing(true)}
+            >Editar perfil</button>
+          </>
+        ) : (
+          <form
+            className="flex flex-col items-center gap-2 mt-2"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setEditError('');
+              try {
+                await updateProfile(user, { displayName: newName });
+                // Para email, se requiere reautenticación en Firebase, aquí solo se muestra el campo
+                setEditing(false);
+              } catch (err) {
+                setEditError('Error al actualizar perfil');
+              }
+            }}
+          >
+            <input
+              className="px-2 py-1 rounded bg-gray-700 text-white w-40"
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              placeholder="Nombre"
+            />
+            <input
+              className="px-2 py-1 rounded bg-gray-700 text-white w-40"
+              value={newEmail}
+              onChange={e => setNewEmail(e.target.value)}
+              placeholder="Email"
+              disabled
+            />
+            <button type="submit" className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Guardar</button>
+            <button type="button" className="text-gray-400 mt-1" onClick={() => setEditing(false)}>Cancelar</button>
+            {editError && <div className="text-red-400 text-xs mt-1">{editError}</div>}
+          </form>
+        )}
+        <div className="text-xs text-gray-400 mt-2">Fecha de registro: {user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : '-'}</div>
       </div>
       <button
         onClick={logout}
-        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mb-6 transition"
+        className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg shadow-md mb-6 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95"
       >
         Cerrar sesión
       </button>
-      {/* Sección de compañero eliminada */}
     </div>
   );
 }
