@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AchievementBanner from '../components/Achievements/AchievementBanner';
+import ProgressChart from '../components/Progress/ProgressChart';
+import ProgressPhotoCompare from '../components/Progress/ProgressPhotoCompare';
 import { getAuth } from 'firebase/auth';
 import { saveMonthlyProgress, getMonthlyProgress } from '../services/progress';
 import { uploadMealPhoto } from '../services/storage';
@@ -70,10 +72,15 @@ export default function ProgressPage() {
     <>
       {showBanner && <AchievementBanner message="¡Progreso mensual registrado!" onClose={() => setShowBanner(false)} />}
       <div className="max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-6 mt-8" role="form" aria-labelledby="progress-title">
-        <h2 id="progress-title" className="text-2xl font-bold text-blue-300 mb-4 text-center">Progreso mensual</h2>
+        <h2 id="progress-title" className="text-2xl font-bold text-blue-300 mb-2 text-center">Progreso mensual</h2>
+        <div className="text-center text-blue-200 font-bold mb-4 text-lg">
+          Mes actual: {dayjs(mes).format('MMMM YYYY')}
+        </div>
+        {/* Carrusel de fotos y pesos históricos */}
+        <ProgressPhotoCompare />
+        {/* Formulario de registro mensual */}
         {!yaRegistrado && (
           <div className="text-gray-400 text-center mt-8">
-            <img src="/src/assets/images/empty-habits.svg" alt="Sin progreso" className="mx-auto mb-4 w-24 h-24 opacity-80" />
             <div className="font-semibold">¡Aún no registraste tu progreso este mes!</div>
             <div className="text-sm text-gray-400">Sube tu peso y foto para ver tu avance.</div>
           </div>
@@ -123,6 +130,8 @@ export default function ProgressPage() {
             {error && <div className="text-red-400 text-center font-semibold" role="alert">{error}</div>}
           </div>
         </form>
+        {/* Gráfica de evolución de peso */}
+        <ProgressChart />
       </div>
     </>
   );

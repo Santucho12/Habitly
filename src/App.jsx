@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import ThemeProvider from './components/ThemeProvider';
+// import ErrorBoundary from './components/ErrorBoundary';
 import { Link, Routes, Route, Navigate } from 'react-router-dom';
 import { auth } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
