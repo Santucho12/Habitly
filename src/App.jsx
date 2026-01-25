@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
+import HomeComparativoPage from './pages/HomeComparativoPage';
 import Layout from './components/Layout/Layout';
 import ChecklistPage from './pages/Checklist';
 import MealsPage from './pages/Meals';
@@ -65,6 +66,7 @@ export default function App() {
                 <Layout>
                   <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/comparativo" element={<HomeComparativoPage />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/checklist" element={<ChecklistPage />} />
                     <Route path="/meals" element={<MealsPage />} />

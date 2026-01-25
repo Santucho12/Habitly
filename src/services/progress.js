@@ -12,3 +12,16 @@ export async function getMonthlyProgress(userId, mes) {
 	const snap = await getDoc(ref);
 	return snap.exists() ? snap.data() : null;
 }
+
+// Obtiene el peso actual y el anterior del usuario
+import dayjs from 'dayjs';
+export async function getLastTwoWeights(userId) {
+	const mesActual = dayjs().format('YYYY-MM');
+	const mesAnterior = dayjs().subtract(1, 'month').format('YYYY-MM');
+	const actual = await getMonthlyProgress(userId, mesActual);
+	const anterior = await getMonthlyProgress(userId, mesAnterior);
+	return {
+		actual: actual?.peso || null,
+		anterior: anterior?.peso || null,
+	};
+}

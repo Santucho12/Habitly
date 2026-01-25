@@ -45,3 +45,20 @@ export async function hasCompanion(userId) {
   }
   return false;
 }
+
+// Devuelve los datos del compañero de un usuario
+export async function getCompanionData(userId) {
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) {
+    const companeroId = userSnap.data().companeroId;
+    if (companeroId) {
+      const companeroRef = doc(db, 'users', companeroId);
+      const companeroSnap = await getDoc(companeroRef);
+      if (companeroSnap.exists()) {
+        return { id: companeroSnap.id, ...companeroSnap.data() };
+      }
+    }
+  }
+  return null;
+}

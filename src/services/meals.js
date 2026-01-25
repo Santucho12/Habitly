@@ -27,3 +27,23 @@ export async function hasExceptionThisWeek(userId, weekKey) {
 	// Buscar meals de la semana y ver si alguna tiene excepcion=true
 	// (esto requiere query, se implementa en el componente)
 }
+
+// Obtiene la última comida registrada de la semana actual
+import dayjs from 'dayjs';
+export async function getLastMeal(userId) {
+	const today = dayjs();
+	for (let i = 0; i < 7; i++) {
+		const fecha = today.subtract(i, 'day').format('YYYY-MM-DD');
+		const data = await getDailyMeals(userId, fecha);
+		if (data) {
+			// Buscar la última comida registrada
+			const comidas = ['cena', 'merienda', 'almuerzo', 'desayuno'];
+			for (const tipo of comidas) {
+				if (data[tipo]) {
+					return { tipo, ...data[tipo], fecha };
+				}
+			}
+		}
+	}
+	return null;
+}

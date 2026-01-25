@@ -16,8 +16,10 @@ const ACTIVITIES = [
   { key: 'caminar', label: 'Caminar', points: 8 },
 ];
 
-export default function Checklist({ showAddHabitForm = true }) {
+export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = null }) {
   const { user } = useAuth();
+  // Si es "yo" usamos el usuario actual, si es "companero" usamos el id pasado por prop (o null para ejemplo)
+  const uid = usuarioType === 'yo' ? user?.uid : usuarioId;
   const [habits, setHabits] = useState([]);
   const [checked, setChecked] = useState({});
   const [loading, setLoading] = useState(true);
@@ -36,10 +38,10 @@ export default function Checklist({ showAddHabitForm = true }) {
 
   useEffect(() => {
     async function fetchWeekAndMonth() {
-      if (!user) return;
-      const habitsData = await getHabitsByUser(user.uid);
+      if (!uid) return;
+      const habitsData = await getHabitsByUser(uid);
       setHabits(habitsData);
-      const todayData = await getDailyActivity(user.uid, today);
+      const todayData = await getDailyActivity(uid, today);
       setChecked(todayData || {});
       // Semana
       const weekStart = dayjs().startOf('week');
@@ -47,7 +49,7 @@ export default function Checklist({ showAddHabitForm = true }) {
       for (let i = 0; i < 7; i++) {
         const d = weekStart.add(i, 'day').format('YYYY-MM-DD');
         // eslint-disable-next-line no-await-in-loop
-        const act = await getDailyActivity(user.uid, d);
+        const act = await getDailyActivity(uid, d);
         weekArr.push({
           date: d,
           gym: act?.gym || false,
@@ -63,7 +65,7 @@ export default function Checklist({ showAddHabitForm = true }) {
       for (let i = 0; i < daysInMonth; i++) {
         const d = monthStart.add(i, 'day').format('YYYY-MM-DD');
         // eslint-disable-next-line no-await-in-loop
-        const act = await getDailyActivity(user.uid, d);
+        const act = await getDailyActivity(uid, d);
         monthArr.push({
           date: d,
           gym: act?.gym || false,
@@ -75,7 +77,7 @@ export default function Checklist({ showAddHabitForm = true }) {
       setLoading(false);
     }
     fetchWeekAndMonth();
-  }, [user, today]);
+  }, [uid, today]);
 
   const handleCheck = async (key) => {
     if (checked[key]) return; // No desmarcar
@@ -140,8 +142,11 @@ export default function Checklist({ showAddHabitForm = true }) {
   if (loading) return <div>Cargando check-list...</div>;
 
   return (
-    <div className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-5 mb-8 shadow-xl">
-      <h3 className="text-2xl font-extrabold mb-4 text-blue-300 text-center drop-shadow">Check-list diaria de actividades</h3>
+    <div
+      className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-5 mb-8 shadow-xl"
+      style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}
+    >
+      {/* Título eliminado por solicitud */}
       <div className="flex flex-col gap-4 mb-6">
         {ACTIVITIES.map(act => {
           const daysDone = weekActivities.filter(d => d[act.key]).length;
@@ -163,19 +168,19 @@ export default function Checklist({ showAddHabitForm = true }) {
                 <input
                   type="checkbox"
                   checked={!!checked[act.key]}
-                  onChange={() => handleCheck(act.key)}
-                  disabled={!!checked[act.key]}
+                  onChange={usuarioType === 'yo' ? () => handleCheck(act.key) : undefined}
+                  disabled={usuarioType !== 'yo' || !!checked[act.key]}
                   className={`w-6 h-6 transition-all duration-200 ${
                     act.key === 'gym' ? 'accent-green-500' :
                     act.key === 'correr' ? 'accent-blue-500' :
                     act.key === 'caminar' ? 'accent-cyan-300' : 'accent-blue-500'
-                  }`}
+                  } ${usuarioType !== 'yo' ? 'opacity-60 cursor-not-allowed' : ''}`}
                 />
                 <span className="font-bold text-white text-lg tracking-wide">{act.label}</span>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow">+{act.points} pts</span>
-                <span className={`${badgeColor} text-white text-xs px-2 py-1 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
+                <span className="bg-blue-500 text-white text-[7px] font-bold px-2 py-0.5 rounded-full shadow">+{act.points} pts</span>
+                <span className={`${badgeColor} text-white text-[7px] px-2 py-0.5 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
               </div>
             </div>
           );
@@ -185,15 +190,6 @@ export default function Checklist({ showAddHabitForm = true }) {
       {error && <div className="bg-red-100 border border-red-400 text-red-700 text-sm rounded-lg px-3 py-2 mb-2 text-center font-semibold shadow">{error}</div>}
       {/* Calendario semanal debajo del checklist */}
       <div className="mt-8">
-        <h4 className="text-lg font-bold text-blue-400 mb-3 text-center">Calendario {showMonth ? 'mensual' : 'semanal'}</h4>
-        <div className="flex justify-center mb-4">
-          <button
-            className="px-3 py-1 rounded bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700 transition"
-            onClick={() => setShowMonth((v) => !v)}
-          >
-            {showMonth ? 'Ver semana' : 'Ver mes completo'}
-          </button>
-        </div>
         <div className={`flex flex-col items-center mb-6`} style={showMonth ? {maxWidth: '370px'} : {}}>
           {showMonth
             ? (() => {
@@ -322,79 +318,6 @@ export default function Checklist({ showAddHabitForm = true }) {
           );
         })()}
       </div>
-    {/* Formulario para agregar hábito */}
-    {showAddHabitForm && (
-      <div className="mt-8 bg-gray-900 rounded-xl p-4 shadow-lg">
-        <h4 className="text-lg font-bold text-blue-400 mb-3 text-center">Agregar nuevo hábito</h4>
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setAddHabitError('');
-            setAddHabitSuccess('');
-            if (!newHabitName.trim()) {
-              setAddHabitError('El nombre es obligatorio.');
-              return;
-            }
-            if (!user) {
-              setAddHabitError('Usuario no autenticado.');
-              return;
-            }
-            try {
-              const habitObj = {
-                userId: user.uid,
-                name: newHabitName.trim(),
-                type: newHabitType,
-                meta: Number(newHabitMeta) || 1,
-                createdAt: new Date().toISOString(),
-              };
-              await setDoc(doc(db, 'habits', `${user.uid}_${newHabitType}`), habitObj, { merge: true });
-              setAddHabitSuccess('¡Hábito agregado!');
-              setNewHabitName('');
-              setNewHabitType('gym');
-              setNewHabitMeta(1);
-              const habitsData = await getHabitsByUser(user.uid);
-              setHabits(habitsData);
-            } catch (err) {
-              setAddHabitError('Error al guardar el hábito.');
-            }
-          }}
-        >
-          <input
-            type="text"
-            className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Nombre del hábito"
-            value={newHabitName}
-            onChange={e => setNewHabitName(e.target.value)}
-          />
-          <select
-            className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none"
-            value={newHabitType}
-            onChange={e => setNewHabitType(e.target.value)}
-          >
-            <option value="gym">Gimnasio</option>
-            <option value="correr">Correr</option>
-            <option value="caminar">Caminar</option>
-          </select>
-          <input
-            type="number"
-            min={1}
-            className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none"
-            placeholder="Meta semanal"
-            value={newHabitMeta}
-            onChange={e => setNewHabitMeta(e.target.value)}
-          />
-          <button
-            type="submit"
-            className="bg-green-600 text-white font-bold py-2 rounded shadow hover:bg-green-700 transition"
-          >
-            Agregar hábito
-          </button>
-          {addHabitError && <div className="text-red-400 text-sm font-semibold text-center mt-2">{addHabitError}</div>}
-          {addHabitSuccess && <div className="text-green-400 text-sm font-semibold text-center mt-2">{addHabitSuccess}</div>}
-        </form>
-      </div>
-    )}
-    </div>
+          </div>
   );
 }

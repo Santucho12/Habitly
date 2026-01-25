@@ -15,3 +15,11 @@ export async function getDailyActivity(userId, date) {
 	if (snap.exists()) return snap.data();
 	return null;
 }
+
+// Devuelve los datos básicos del usuario (nombre, avatar, etc)
+export async function getUserData(userId) {
+  const ref = doc(db, 'users', userId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return { id: snap.id, ...snap.data() };
+  return null;
+}
