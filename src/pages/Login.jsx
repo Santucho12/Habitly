@@ -25,7 +25,7 @@ export default function Login() {
     setError("");
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      navigate('/');
+      navigate('/comparativo');
     } catch (e) {
       setError("Usuario o contraseña incorrectos");
     } finally {

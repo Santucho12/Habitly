@@ -6,7 +6,7 @@ export default function Sidebar({ children }) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const menu = [
-    { icon: '🏠', label: 'Home', path: '/' },
+    { icon: '🏠', label: 'Home', path: '/comparativo' },
     { icon: '✅', label: 'Check-list', path: '/checklist' },
     { icon: '🍽️', label: 'Comidas', path: '/meals' },
     { icon: '📈', label: 'Progreso', path: '/progress' },
