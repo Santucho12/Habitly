@@ -15,15 +15,15 @@ export default function HomeComparativoPage() {
   // Ejemplo: const companeroId = ...
   const companeroId = 'COMPANERO_ID_AQUI'; // Reemplaza por el id real
   return (
-    <div className="w-full max-w-4xl mx-auto mt-4 sm:mt-8 px-2 pt-[56px]">
+    <div className="w-full max-w-4xl mx-auto mt-4 sm:mt-8 px-2 pt-[48px]">
       <div style={{ marginTop: '-230px', marginLeft: '-165px' }}>
         <PuntosComparativo usuarioId={user?.uid} companeroId={companeroId} />
       </div>
       <div className="flex flex-row gap-0 justify-center items-start mb-8" style={{ marginLeft: '-4px', marginTop: '15px' }}>
-        <div className="flex-1 flex justify-end p-0 m-0" style={{ marginLeft: '-30px' }}>
+        <div className="flex-1 flex justify-end p-0 m-0" style={{ marginLeft: '-24px' }}>
           <ChecklistComparativo usuarioType="yo" usuarioId={user?.uid} />
         </div>
-        <div className="flex-1 flex justify-start p-0 m-0" style={{ marginLeft: '-116px' }}>
+        <div className="flex-1 flex justify-start p-0 m-0" style={{ marginLeft: '-119px' }}>
           <ChecklistComparativo usuarioType="companero" usuarioId={companeroId} />
         </div>
       </div>
