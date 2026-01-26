@@ -16,7 +16,7 @@ export default function HomeComparativoPage() {
   const companeroId = 'COMPANERO_ID_AQUI'; // Reemplaza por el id real
   return (
     <div className="w-full max-w-4xl mx-auto mt-4 sm:mt-8 px-2 pt-[56px]">
-      <div style={{ marginTop: '40px', marginLeft: '-165px' }}>
+      <div style={{ marginTop: '-50px', marginLeft: '-165px' }}>
         <PuntosComparativo usuarioId={user?.uid} companeroId={companeroId} />
       </div>
       <div className="flex flex-row gap-0 justify-center items-start mb-8" style={{ marginLeft: '-4px', marginTop: '15px' }}>
