@@ -49,7 +49,7 @@ export default function Register() {
       });
       setSuccess(true);
       setTimeout(() => {
-        navigate('/');
+        navigate('/comparativo');
       }, 1200);
     } catch (e) {
       setError(e.message);

@@ -137,7 +137,13 @@ export default function Checklist({ showAddHabitForm = true }) {
     }, { merge: true });
   };
 
-  if (loading) return <div>Cargando check-list...</div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center mt-8">
+      <span className="text-lg font-bold text-blue-400 bg-gray-900 px-4 py-2 rounded-lg shadow-lg border border-blue-500 animate-pulse">
+        Cargando check-list...
+      </span>
+    </div>
+  );
 
   return (
     <div className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-5 mb-8 shadow-xl">
@@ -174,8 +180,8 @@ export default function Checklist({ showAddHabitForm = true }) {
                 <span className="font-bold text-white text-lg tracking-wide">{act.label}</span>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow">+{act.points} pts</span>
-                <span className={`${badgeColor} text-white text-xs px-2 py-1 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
+                <span className="bg-blue-500 text-white text-[0.66rem] font-bold px-2 py-1 rounded-full shadow">+{act.points} pts</span>
+                <span className={`${badgeColor} text-white text-[0.66rem] px-2 py-1 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
               </div>
             </div>
           );

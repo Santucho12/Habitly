@@ -37,7 +37,12 @@ export default function Layout({ children }) {
         <Topbar />
         <main className="flex-1 p-4 overflow-y-auto pt-[56px]">
           {activityName && (
-            <h1 className="text-2xl font-bold mb-6 text-white">{activityName}</h1>
+            <h1
+              className="text-2xl font-bold mb-6 text-white"
+              style={['Check-list','Comidas','Estadísticas','Progreso','Logros','Perfil'].includes(activityName) ? { marginTop: '30px' } : {}}
+            >
+              {activityName}
+            </h1>
           )}
           <div key={location.pathname} className="transition-all duration-500 ease-in-out animate-fadein">
             {children}
