@@ -144,10 +144,10 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
   return (
     <div
       className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-5 mb-8 shadow-xl"
-      style={{ transform: 'scale(0.5)', transformOrigin: 'top left' }}
+      style={{ transform: 'scale(0.57)', transformOrigin: 'top left' }}
     >
       {/* Título eliminado por solicitud */}
-      <div className="flex flex-col gap-4 mb-6">
+      <div className="flex flex-col gap-6 mb-6">
         {ACTIVITIES.map(act => {
           const daysDone = weekActivities.filter(d => d[act.key]).length;
           // Buscar meta semanal para la actividad

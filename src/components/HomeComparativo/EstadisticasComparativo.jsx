@@ -49,7 +49,7 @@ export default function EstadisticasComparativo({ usuario, companero }) {
         </div>
       </div>
       {/* Card Compañero */}
-      <div className="rounded-3xl border-4 border-pink-900 bg-gradient-to-br from-gray-900 via-pink-900 to-gray-800 shadow-2xl p-6 flex flex-col items-center justify-center text-white w-64" style={{ boxShadow: '0 8px 32px 0 rgba(0,0,0,0.5)', transform: 'scale(0.6)', transformOrigin: 'top left', marginTop: '-120px', marginLeft: '-70px' }}>
+      <div className="rounded-3xl border-4 border-pink-900 bg-gradient-to-br from-gray-900 via-pink-900 to-gray-800 shadow-2xl p-6 flex flex-col items-center justify-center text-white w-64" style={{ boxShadow: '0 8px 32px 0 rgba(0,0,0,0.5)', transform: 'scale(0.6)', transformOrigin: 'top left', marginTop: '-120px', marginLeft: '-86px' }}>
         <div className="mb-2 text-4xl">🏋️‍♂️</div>
         <div className="font-extrabold text-2xl tracking-wide mb-1 uppercase">{companero?.nombre || 'Compañero'}</div>
         <div className="mb-3 flex gap-4">

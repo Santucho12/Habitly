@@ -35,7 +35,7 @@ function ComidasSlider({ comidas, readOnly }) {
   const comida = comidas[current];
   return (
     <div className="w-full flex flex-col items-center justify-center"
-    style={{ transform: 'scale(0.6)', transformOrigin: 'top left', marginTop: '-250px', marginRight: '40px' }}>
+    style={{ transform: 'scale(0.62)', transformOrigin: 'top left', marginTop: '-250px', marginRight: '40px' }}>
       <div className="relative w-72 h-80 flex items-center justify-center">
             {(
           <button
