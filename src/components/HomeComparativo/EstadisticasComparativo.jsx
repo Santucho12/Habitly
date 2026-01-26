@@ -28,7 +28,7 @@ export default function EstadisticasComparativo({ usuario, companero }) {
   }, [usuario, companero, mes]);
 
   return (
-    <div className="grid grid-cols-2 gap-8 w-full max-w-xl mx-auto my-8">
+    <div className="grid grid-cols-2 gap-[62px] w-full max-w-xl mx-auto my-8">
       {/* Card Usuario */}
       <div className="rounded-3xl border-4 border-blue-900 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800 shadow-2xl p-6 flex flex-col items-center justify-center text-white w-64" style={{ boxShadow: '0 8px 32px 0 rgba(0,0,0,0.5)', transform: 'scale(0.6)', transformOrigin: 'top left', marginTop: '-120px' }}>
         <div className="mb-2 text-4xl">🏅</div>

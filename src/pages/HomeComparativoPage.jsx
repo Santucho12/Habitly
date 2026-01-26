@@ -31,7 +31,7 @@ export default function HomeComparativoPage() {
         </div>
       </div>
       <div className="flex flex-row gap-0 justify-center items-start mt-8">
-        <div style={{ marginLeft: '-39px' }}>
+        <div style={{ marginLeft: '-64px', marginTop: '-40px' }}>
           <ProgresoComparativo 
             usuario={{ nombre: 'Tú', pesoActual: 72, kilosBajados: 3.5, mes: 'Enero' }}
             companero={{ nombre: 'Compañero', pesoActual: 80, kilosBajados: 2.0, mes: 'Enero' }}
@@ -39,7 +39,7 @@ export default function HomeComparativoPage() {
         </div>
       </div>
       <div className="flex flex-row gap-0 justify-center items-start mt-8">
-        <div style={{ marginLeft: '3px', marginTop: '32px' }}>
+        <div style={{ marginLeft: '-7px', marginTop: '-10px' }}>
           <EstadisticasComparativo
             usuario={{ nombre: 'Tú', habitosCumplidos: 15, puntos: 1200 }}
             companero={{ nombre: 'Compañero', habitosCumplidos: 12, puntos: 950 }}
