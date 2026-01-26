@@ -35,7 +35,12 @@ export default function Layout({ children }) {
       <Sidebar />
       <div className="relative flex-1 flex flex-col z-20 w-full">
         <Topbar />
-        <main className="flex-1 p-4 overflow-y-auto pt-[56px]">
+        <main
+          className="flex-1 p-4 overflow-y-auto"
+          style={{
+            paddingTop: `calc(env(safe-area-inset-top, 0px) + 5rem)`
+          }}
+        >
           {activityName && (
             <h1
               className="text-2xl font-bold mb-6 text-white"

@@ -1,7 +1,6 @@
 html, body {
   background: #1e3a8a;
   min-height: 100vh;
-  padding-top: env(safe-area-inset-top, 0px);
   overflow-y: scroll;
 }
 @keyframes ranking-up {
