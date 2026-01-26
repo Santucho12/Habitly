@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function Sidebar({ children }) {
+export default function Sidebar({ open, setOpen, children }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [open, setOpen] = useState(false);
   const menu = [
     { icon: '🏠', label: 'Home', path: '/comparativo' },
     { icon: '✅', label: 'Check-list', path: '/checklist' },

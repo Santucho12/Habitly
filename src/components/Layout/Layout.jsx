@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { useLocation } from 'react-router-dom';
 
 export default function Layout({ children }) {
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   // Obtener el nombre de la actividad según la ruta
   const routeNames = {
     '/': 'Home',
@@ -32,9 +33,9 @@ export default function Layout({ children }) {
       {/* Capa para oscurecer el video y mejorar legibilidad */}
       <div className="fixed inset-0 bg-black/80 z-10 pointer-events-none select-none" />
       {/* Sidebar y Topbar en la raíz visual */}
-      <Sidebar />
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
       <div className="relative flex-1 flex flex-col z-20 w-full">
-        <Topbar />
+        <Topbar open={sidebarOpen} setOpen={setSidebarOpen} />
         <main
           className="flex-1 p-4 overflow-y-auto"
           style={{

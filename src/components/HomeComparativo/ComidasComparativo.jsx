@@ -47,18 +47,20 @@ function ComidasSlider({ comidas, readOnly }) {
           </button>
             )}
         <div
-          className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-4 shadow-xl w-64 h-72 flex flex-col items-center justify-center"
-             
+          className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-4 shadow-xl w-64 h-72 flex flex-col items-center justify-center relative"
         >
           <img
             src={comida.foto}
             alt={comida.titulo}
-            className="w-40 h-40 object-cover rounded-xl mb-4 border-4 border-gray-900"
+            className="absolute left-1/2 top-1/2 w-[90%] h-[90%] object-cover rounded-xl border-4 border-gray-900 -translate-x-1/2 -translate-y-1/2 z-0"
+            style={{zIndex:0}}
           />
-          <h3 className="text-xl font-bold text-white mb-2 text-center drop-shadow">{comida.titulo}</h3>
-          <span className={`text-white text-base font-semibold px-4 py-2 rounded-full shadow ${puntuacionColor[comida.puntuacion]}`}>
-            {comida.puntuacion === 'buena' ? 'Buena 👍' : comida.puntuacion === 'masomenos' ? 'Más o menos 😐' : 'Mala 👎'}
-          </span>
+          <div className="relative z-10 w-full flex flex-col items-center justify-center">
+            <h3 className="text-xl font-bold text-white mb-2 text-center drop-shadow"style={{marginTop: '150px'}}>{comida.titulo}</h3>
+            <span className={`text-white text-base font-semibold px-4 py-2 rounded-full shadow ${puntuacionColor[comida.puntuacion]}`}>
+              {comida.puntuacion === 'buena' ? 'Buena 👍' : comida.puntuacion === 'masomenos' ? 'Más o menos 😐' : 'Mala 👎'}
+            </span>
+          </div>
         </div>
             {(
           <button

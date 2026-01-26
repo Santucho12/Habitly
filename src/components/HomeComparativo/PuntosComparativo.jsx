@@ -33,7 +33,7 @@ export default function PuntosComparativo({ usuarioId, companeroId }) {
       {/* Card Usuario */}
       <div className="relative bg-gradient-to-br from-blue-900 via-blue-700 to-blue-800 rounded-3xl px-8 py-5 flex flex-col items-center shadow-2xl min-w-[150px] border-2 border-blue-400/60">
         <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-blue-600 rounded-full p-2 shadow-lg border-4 border-blue-200"><FaMedal className="text-yellow-300 text-2xl" /></div>
-        <span className="text-white font-extrabold text-lg mb-1 mt-4 tracking-wide flex items-center gap-2"><FaStar className="text-blue-300" />Tú</span>
+        <span className="text-white font-extrabold text-sm mb-1 mt-4 tracking-wide flex items-center gap-2"><FaStar className="text-blue-300 text-sm" />Tú</span>
         <span className="text-3xl font-black text-blue-200 drop-shadow mb-1">{usuario.puntosTotales}</span>
         <span className="text-xs text-blue-200 mb-2">Puntos totales</span>
         <span className="inline-flex items-center gap-1 text-base font-bold text-blue-400 bg-blue-950/60 px-3 py-1 rounded-full shadow mt-1"><FaBolt className="text-yellow-300" />+{usuario.puntosDia} hoy</span>
