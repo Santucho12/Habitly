@@ -65,7 +65,7 @@ export default function App() {
               <PrivateRoute>
                 <Layout>
                   <Routes>
-                    <Route path="/" element={<Home />} />
+                    <Route path="/" element={<Navigate to="/comparativo" replace />} />
                     <Route path="/comparativo" element={<HomeComparativoPage />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/checklist" element={<ChecklistPage />} />

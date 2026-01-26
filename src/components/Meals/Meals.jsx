@@ -139,8 +139,8 @@ export default function Meals({ fecha }) {
         });
       }
     }
-    if (permitidosSemana >= 2) {
-      setError('Ya usaste tus 2 permitidos esta semana.');
+    if (permitidosSemana >= 4) {
+      setError('Ya usaste tus 4 permitidos esta semana.');
       return;
     }
     // Si ya puntuaste, no se puede marcar permitido
@@ -161,8 +161,8 @@ export default function Meals({ fecha }) {
   if (loading) return <div>Cargando comidas...</div>;
 
   return (
-    <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950 rounded-2xl p-5 mb-8 shadow-xl max-w-md mx-auto">
-      <h3 className="text-2xl font-extrabold mb-2 text-blue-300 text-center drop-shadow">Comidas del día</h3>
+    <div className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-5 mb-8 shadow-xl max-w-md mx-auto">
+      <h3 className="text-2xl font-extrabold mb-4 text-blue-300 text-center drop-shadow">Comidas del día</h3>
       {selectedDay !== dayjs().format('YYYY-MM-DD') && (
         <div className="text-center text-blue-200 font-bold mb-4 text-lg">
           Día seleccionado: {dayjs(selectedDay).format('dddd DD/MM/YYYY')}<br />
@@ -178,13 +178,13 @@ export default function Meals({ fecha }) {
           </button>
         </div>
         {showWeek && (
-          <div className="flex flex-row justify-center gap-2 mb-6">
+          <div className="flex flex-wrap justify-center gap-2 mb-6 px-1">
             {weekDays.map((day, idx) => {
               const dayName = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'][dayjs(day).day()];
               return (
                 <button
                   key={day}
-                  className={`px-2 py-1 rounded-full text-xs font-bold shadow transition-all duration-200 focus:outline-none ${selectedDay === day ? 'bg-blue-500 text-white' : 'bg-gray-700 text-blue-200 hover:bg-blue-400 hover:text-white'}`}
+                  className={`px-0.5 py-0.5 rounded-full text-[0.65rem] font-bold shadow transition-all duration-200 focus:outline-none mx-[2px] ${selectedDay === day ? 'bg-blue-500 text-white' : 'bg-gray-700 text-blue-200 hover:bg-blue-400 hover:text-white'}`}
                   onClick={() => setSelectedDay(day)}
                   title={day}
                 >
@@ -194,12 +194,11 @@ export default function Meals({ fecha }) {
             })}
           </div>
         )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="flex flex-col gap-6 mb-6">
         {MEALS.map(meal => (
-          <div key={meal.key} className="relative flex flex-col items-center bg-gray-900 rounded-xl p-4 shadow-lg border-2 border-blue-700">
-            {/* ...existing code for each meal card... */}
+          <div key={meal.key} className="relative flex flex-col items-center bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-5 shadow-lg border border-gray-700">
             <button
-              className={`absolute top-2 right-2 px-2 py-0.5 text-xs rounded-full font-bold text-white shadow transition-all duration-200 focus:outline-none bg-gray-500 flex items-center gap-1 ${meals[meal.key]?.permitido ? 'ring-2 ring-white scale-105' : 'opacity-80 hover:scale-105'}`}
+                  className={`absolute top-3 right-3 px-1 py-0.5 rounded-full text-[0.7rem] font-bold shadow transition-all duration-200 focus:outline-none bg-blue-600 flex items-center gap-1 ${meals[meal.key]?.permitido ? 'ring-2 ring-white scale-105' : 'opacity-80 hover:scale-105'}`}
               onClick={() => handlePermitido(meal.key)}
               disabled={loading || meals[meal.key]?.puntuacion !== undefined || meals[meal.key]?.permitido}
               title="Marcar permitido"
@@ -207,13 +206,13 @@ export default function Meals({ fecha }) {
               <span role="img" aria-label="Permitido">🍽️</span>
               <span>Permitido</span>
             </button>
-            <span className="text-4xl mb-2">{meal.icon}</span>
-            <span className="font-bold text-white text-lg mb-2 drop-shadow">{meal.label}</span>
-            <div className="flex gap-3 mb-2">
+            <span className="text-5xl mb-2 drop-shadow-lg">{meal.icon}</span>
+            <span className="font-extrabold text-blue-300 text-lg mb-2 drop-shadow text-center">{meal.label}</span>
+            <div className="flex gap-2 mb-2">
               {PUNTUACIONES.map(opt => (
                 <button
                   key={opt.value}
-                  className={`px-2 py-0.5 text-sm rounded-full font-bold text-white shadow transition-all duration-200 focus:outline-none ${opt.color} ${meals[meal.key]?.puntuacion === opt.value ? 'ring-2 ring-white scale-105' : 'opacity-80 hover:scale-105'}`}
+                  className={`px-2 py-1 text-xs rounded-full font-bold text-white shadow transition-all duration-200 focus:outline-none ${opt.color} ${meals[meal.key]?.puntuacion === opt.value ? 'ring-2 ring-white scale-105' : 'opacity-80 hover:scale-105'}`}
                   onClick={() => handlePuntuacion(meal.key, opt.value)}
                   disabled={loading || meals[meal.key]?.permitido}
                   title={opt.label}
@@ -233,10 +232,10 @@ export default function Meals({ fecha }) {
               <img src={meals[meal.key].foto} alt="foto comida" className="w-32 h-32 object-cover rounded shadow-lg border-2 border-blue-400 mt-2" />
             )}
             {meals[meal.key]?.permitido && (
-              <span className="text-sm font-semibold text-gray-300 mt-1">Permitido: no suma ni resta puntos</span>
+              <span className="text-xs font-semibold text-gray-300 mt-1">Permitido: no suma ni resta puntos</span>
             )}
             {meals[meal.key]?.puntuacion !== undefined && !meals[meal.key]?.permitido && (
-              <span className="text-sm font-semibold text-blue-300 mt-1">
+              <span className="text-xs font-semibold text-blue-300 mt-1">
                 Estado: {PUNTUACIONES.find(o => o.value === meals[meal.key]?.puntuacion)?.label}
                 {(() => {
                   const puntos = meals[meal.key]?.puntuacion;
@@ -266,7 +265,7 @@ export default function Meals({ fecha }) {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-200 font-semibold">Permitidos usados esta semana:</span>
-                <span className="text-green-400 text-lg font-bold">{permitidosSemana}/2</span>
+                <span className="text-green-400 text-lg font-bold">{permitidosSemana}/4</span>
               </div>
             </>
           );
