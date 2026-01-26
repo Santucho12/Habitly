@@ -178,10 +178,7 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
                 />
                 <span className="font-bold text-white text-lg tracking-wide">{act.label}</span>
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="bg-blue-500 text-white text-[7px] font-bold px-2 py-0.5 rounded-full shadow">+{act.points} pts</span>
-                <span className={`${badgeColor} text-white text-[7px] px-2 py-0.5 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
-              </div>
+              {/* Eliminado: badges de puntos y progreso semanal */}
             </div>
           );
         })}
