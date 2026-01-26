@@ -8,11 +8,13 @@ export default function Topbar() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   return (
-    <header
-      className="w-full fixed top-0 left-0 z-50 px-4 sm:px-6 flex items-center justify-between bg-blue-900 shadow-lg border-b-2 border-blue-700"
-      style={{ minHeight: '56px', boxShadow: '0 2px 12px #1e293b33', paddingTop: 'env(safe-area-inset-top, 0px)' }}
-      role="banner"
-    >
+    <div className="w-full fixed top-0 left-0 z-50" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="absolute top-0 left-0 w-full h-full bg-blue-900" style={{ height: 'calc(56px + env(safe-area-inset-top, 0px))', zIndex: 0 }} />
+      <header
+        className="relative w-full px-4 sm:px-6 flex items-center justify-between shadow-lg border-b-2 border-blue-700"
+        style={{ minHeight: '56px', boxShadow: '0 2px 12px #1e293b33' }}
+        role="banner"
+      >
       <div className="flex items-center min-w-[40px]">
         {/* Aquí podrías poner el menú hamburguesa si lo tienes */}
       </div>
@@ -34,7 +36,8 @@ export default function Topbar() {
           />
         )}
       </div>
-    </header>
+      </header>
+    </div>
   );
 }
 

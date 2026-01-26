@@ -1,3 +1,8 @@
+html, body {
+  background: #1e3a8a;
+  min-height: 100vh;
+  padding-top: env(safe-area-inset-top, 0px);
+}
 @keyframes ranking-up {
   0% { box-shadow: 0 0 0 0 #facc15; background-color: #facc15; }
   40% { box-shadow: 0 0 16px 8px #facc15; background-color: #facc15; }
