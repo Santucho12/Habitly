@@ -19,7 +19,7 @@ export default function HomeComparativoPage() {
       <div style={{ marginTop: '40px', marginLeft: '-165px' }}>
         <PuntosComparativo usuarioId={user?.uid} companeroId={companeroId} />
       </div>
-      <div className="flex flex-row gap-0 justify-center items-start mb-8" style={{ marginLeft: '-4px', marginTop: '30px' }}>
+      <div className="flex flex-row gap-0 justify-center items-start mb-8" style={{ marginLeft: '-4px', marginTop: '15px' }}>
         <div className="flex-1 flex justify-end p-0 m-0" style={{ marginLeft: '-30px' }}>
           <ChecklistComparativo usuarioType="yo" usuarioId={user?.uid} />
         </div>
