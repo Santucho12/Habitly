@@ -9,7 +9,7 @@ export default function Topbar() {
   const [open, setOpen] = useState(false);
   return (
     <div className="w-full fixed top-0 left-0 z-50" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      <div className="absolute top-0 left-0 w-full h-full bg-blue-900" style={{ height: 'calc(56px + env(safe-area-inset-top, 0px))', zIndex: 0 }} />
+      <div className="fixed top-0 left-0 w-full bg-blue-900" style={{ height: 'calc(56px + env(safe-area-inset-top, 0px))', zIndex: -1 }} />
       <header
         className="relative w-full px-4 sm:px-6 flex items-center justify-between shadow-lg border-b-2 border-blue-700"
         style={{ minHeight: '56px', boxShadow: '0 2px 12px #1e293b33' }}
