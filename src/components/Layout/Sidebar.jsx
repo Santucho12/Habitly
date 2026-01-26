@@ -16,20 +16,9 @@ export default function Sidebar({ children }) {
     { icon: '👤', label: 'Perfil', path: '/profile' },
   ];
 
-  // Botón hamburguesa fijo en la esquina superior izquierda
   // El sidebar está oculto (translate-x-[-100%]) cuando open es false
   return (
     <>
-      {/* Botón hamburguesa SIEMPRE visible en la esquina superior izquierda */}
-      <button
-        className="fixed top-4 left-4 z-50 p-2 rounded bg-gray-900 hover:bg-gray-800 focus:outline-none shadow-lg"
-        aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className="block w-6 h-0.5 bg-white mb-1"></span>
-        <span className="block w-6 h-0.5 bg-white mb-1"></span>
-        <span className="block w-6 h-0.5 bg-white"></span>
-      </button>
       {/* Sidebar deslizante */}
       <aside
         className={`fixed top-0 left-0 z-40 h-full bg-gray-900 text-white w-20 shadow-lg fade-in transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'}`}

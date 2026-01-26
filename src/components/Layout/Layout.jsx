@@ -38,7 +38,7 @@ export default function Layout({ children }) {
         <main
           className="flex-1 p-4 overflow-y-auto"
           style={{
-            paddingTop: `calc(env(safe-area-inset-top, 0px) + 5rem)`
+            paddingTop: `calc(env(safe-area-inset-top, 0px) + 5rem + 200px)`
           }}
         >
           {activityName && (
