@@ -1,4 +1,19 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+
+// Hack para iOS PWA: forzar scroll para que el safe-area se aplique correctamente al cargar
+function IOSPWAScrollHack() {
+  useEffect(() => {
+    const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isIos && isInStandaloneMode) {
+      setTimeout(() => {
+        window.scrollTo(0, 1);
+        window.scrollTo(0, 0);
+      }, 100);
+    }
+  }, []);
+  return null;
+}
 import ThemeProvider from './components/ThemeProvider';
 // import ErrorBoundary from './components/ErrorBoundary';
 import { Link, Routes, Route, Navigate } from 'react-router-dom';
@@ -55,6 +70,7 @@ function PrivateRoute({ children }) {
 export default function App() {
   return (
     <ThemeProvider>
+      <IOSPWAScrollHack />
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
