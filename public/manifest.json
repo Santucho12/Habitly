@@ -3,8 +3,8 @@
   "name": "Habitly Fitness Habits",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e3a8a",
   "description": "App PWA para crear, seguir y comparar hábitos fitness con un compañero.",
   "icons": [
     {
