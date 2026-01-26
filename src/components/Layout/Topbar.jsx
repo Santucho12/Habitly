@@ -10,7 +10,7 @@ export default function Topbar() {
   return (
     <header
       className="w-full fixed top-0 left-0 z-50 px-4 sm:px-6 flex items-center justify-between bg-blue-900 shadow-lg border-b-2 border-blue-700"
-      style={{ minHeight: '56px', boxShadow: '0 2px 12px #1e293b33' }}
+      style={{ minHeight: '56px', boxShadow: '0 2px 12px #1e293b33', paddingTop: 'env(safe-area-inset-top, 0px)' }}
       role="banner"
     >
       <div className="flex items-center min-w-[40px]">
