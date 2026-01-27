@@ -8,12 +8,12 @@
   "description": "App PWA para crear, seguir y comparar hábitos fitness con un compañero.",
   "icons": [
     {
-      "src": "/192icono.png",
+      "src": "/192icon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/512icono.png",
+      "src": "/512icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
