@@ -31,7 +31,7 @@ export default function EstadisticasComparativo({ usuario, companero }) {
     <div className="grid grid-cols-2 gap-[62px] w-full max-w-xl mx-auto my-8">
       {/* Card Usuario */}
       <div className="rounded-3xl border-4 border-blue-900 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800 shadow-2xl p-6 flex flex-col items-center justify-center text-white w-64" style={{ boxShadow: '0 8px 32px 0 rgba(0,0,0,0.5)', transform: 'scale(0.6)', transformOrigin: 'top left', marginTop: '-120px' }}>
-        <div className="mb-2 text-4xl">🏅</div>
+        <div className="mb-2 text-3xl" style={{fontSize: '1.8rem'}}>🏆</div>
         <div className="font-extrabold text-2xl tracking-wide mb-1 uppercase">{usuario?.nombre || 'Tú'}</div>
         <div className="mb-3 flex gap-4">
           <div className="flex flex-col items-center">

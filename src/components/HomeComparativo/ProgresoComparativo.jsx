@@ -5,7 +5,7 @@ export default function ProgresoComparativo({ usuario, companero }) {
     <div className="flex items-center justify-center gap-8 mt-8">
       {/* Card Usuario */}
         <div className="rounded-3xl border-4 border-blue-900 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-800 shadow-2xl p-6 flex flex-col items-center justify-center text-white w-64" style={{ boxShadow: '0 8px 32px 0 rgba(0,0,0,0.5)', transform: 'scale(0.6)', transformOrigin: 'top left', marginTop: '-120px' }}>
-          <div className="mb-3 text-5xl drop-shadow-lg">⚖️</div>
+              <div className="mb-3 text-4xl drop-shadow-lg" style={{fontSize: '2.2rem'}}>📊</div>
           <div className="font-extrabold text-2xl mb-2 tracking-wide uppercase drop-shadow">{usuario?.nombre || 'Tú'}</div>
           <div className="mb-3">
             <span className="text-base font-semibold text-cyan-100">Peso actual:</span><br />

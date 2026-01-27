@@ -28,6 +28,8 @@ export default function Meals({ fecha }) {
   const [showWeek, setShowWeek] = useState(false);
   const [selectedDay, setSelectedDay] = useState(fecha || dayjs().format('YYYY-MM-DD'));
   const [weekDays, setWeekDays] = useState([]);
+  // Previsualización local de fotos
+  const [previewFotos, setPreviewFotos] = useState({});
 
   // Calcular días de la semana actual
   useEffect(() => {
@@ -104,6 +106,12 @@ export default function Meals({ fecha }) {
     setError('');
     setSuccess('');
     if (!file) return;
+    // Previsualización instantánea
+    const reader = new FileReader();
+    reader.onload = e => {
+      setPreviewFotos(prev => ({ ...prev, [key]: e.target.result }));
+    };
+    reader.readAsDataURL(file);
     try {
       const url = await uploadMealPhoto(user.uid, fecha, key, file);
       const newMeals = {
@@ -111,6 +119,7 @@ export default function Meals({ fecha }) {
         [key]: { ...meals[key], foto: url },
       };
       setMeals(newMeals);
+      setPreviewFotos(prev => ({ ...prev, [key]: undefined })); // Limpiar preview al guardar
       await saveDailyMeals(user.uid, fecha, newMeals);
       setSuccess('Foto subida correctamente.');
     } catch (e) {
@@ -196,46 +205,37 @@ export default function Meals({ fecha }) {
         )}
       <div className="flex flex-col gap-6 mb-6">
         {MEALS.map(meal => (
-          <div key={meal.key} className="relative flex flex-col items-center bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-5 shadow-lg border border-gray-700">
-            <button
-                  className={`absolute top-3 right-3 px-1 py-0.5 rounded-full text-[0.7rem] font-bold shadow transition-all duration-200 focus:outline-none bg-blue-600 flex items-center gap-1 ${meals[meal.key]?.permitido ? 'ring-2 ring-white scale-105' : 'opacity-80 hover:scale-105'}`}
-              onClick={() => handlePermitido(meal.key)}
-              disabled={loading || meals[meal.key]?.puntuacion !== undefined || meals[meal.key]?.permitido}
-              title="Marcar permitido"
-            >
-              <span role="img" aria-label="Permitido">🍽️</span>
-              <span>Permitido</span>
-            </button>
-            <span className="text-5xl mb-2 drop-shadow-lg">{meal.icon}</span>
-            <span className="font-extrabold text-blue-300 text-lg mb-2 drop-shadow text-center">{meal.label}</span>
-            <div className="flex gap-2 mb-2">
+          <div key={meal.key} className="relative flex flex-col items-center bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-5 shadow-lg border border-gray-700 min-h-[22rem]">
+            {/* Botón permitido arriba a la derecha */}
+            <div className="absolute right-3 top-3 z-20">
+              <button
+                className={`px-1 py-0.5 rounded-full text-[0.7rem] font-bold shadow transition-all duration-200 focus:outline-none bg-blue-600 flex items-center gap-1 ${meals[meal.key]?.permitido ? 'ring-2 ring-white scale-105' : 'hover:scale-105'}`}
+                onClick={() => handlePermitido(meal.key)}
+                disabled={loading || meals[meal.key]?.puntuacion !== undefined || meals[meal.key]?.permitido}
+                title="Marcar permitido"
+              >
+                <span role="img" aria-label="Permitido">🍽️</span>
+                <span>Permitido</span>
+              </button>
+            </div>
+            {/* Calificación centrada abajo, sin opacidad, más arriba, más separados y más anchos */}
+            <div className="absolute left-1/2 bottom-11 z-20 flex gap-0 -translate-x-1/2">
               {PUNTUACIONES.map(opt => (
                 <button
                   key={opt.value}
-                  className={`px-2 py-1 text-xs rounded-full font-bold text-white shadow transition-all duration-200 focus:outline-none ${opt.color} ${meals[meal.key]?.puntuacion === opt.value ? 'ring-2 ring-white scale-105' : 'opacity-80 hover:scale-105'}`}
+                  className={`w-32 px-0 py-1.5 text-sm rounded-full font-bold text-white shadow transition-all duration-200 focus:outline-none ${opt.color} scale-[0.7] ${meals[meal.key]?.puntuacion === opt.value ? 'ring-2 ring-white scale-105' : 'hover:scale-105'}`}
                   onClick={() => handlePuntuacion(meal.key, opt.value)}
                   disabled={loading || meals[meal.key]?.permitido}
                   title={opt.label}
+                  style={{ marginRight: opt.value !== PUNTUACIONES[PUNTUACIONES.length - 1].value ? '-23px' : '0' }}
                 >
                   <span className="text-base mr-1">{opt.icon}</span>{opt.label}
                 </button>
               ))}
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={e => handleFoto(meal.key, e.target.files[0])}
-              className="mt-2 mb-2 text-xs text-gray-300"
-              disabled={loading}
-            />
-            {meals[meal.key]?.foto && (
-              <img src={meals[meal.key].foto} alt="foto comida" className="w-32 h-32 object-cover rounded shadow-lg border-2 border-blue-400 mt-2" />
-            )}
-            {meals[meal.key]?.permitido && (
-              <span className="text-xs font-semibold text-gray-300 mt-1">Permitido: no suma ni resta puntos</span>
-            )}
+            {/* Estado/Puntaje debajo de la calificación */}
             {meals[meal.key]?.puntuacion !== undefined && !meals[meal.key]?.permitido && (
-              <span className="text-xs font-semibold text-blue-300 mt-1">
+              <span className="absolute left-1/2 bottom-2 z-30 -translate-x-1/2 text-xs font-semibold text-blue-300 bg-black/60 px-3 py-1 rounded-full shadow">
                 Estado: {PUNTUACIONES.find(o => o.value === meals[meal.key]?.puntuacion)?.label}
                 {(() => {
                   const puntos = meals[meal.key]?.puntuacion;
@@ -243,6 +243,35 @@ export default function Meals({ fecha }) {
                 })()}
               </span>
             )}
+            {/* Imagen de la comida ocupa el 90% de la card */}
+            {(previewFotos[meal.key] || meals[meal.key]?.foto) && (
+              <img
+                src={previewFotos[meal.key] || meals[meal.key]?.foto}
+                alt="foto comida"
+                className="w-full h-full object-cover rounded-xl shadow-lg border-2 border-blue-400 absolute left-0 top-0 z-10"
+              />
+            )}
+            {/* Contenido debajo de la imagen */}
+            <div className="relative z-0 flex flex-col items-center w-full mt-40">
+              <div style={{ marginTop: '-130px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {!meals[meal.key]?.foto && (
+                  <>
+                    <span className="text-5xl mb-2 drop-shadow-lg">{meal.icon}</span>
+                    <span className="font-extrabold text-blue-300 text-lg mb-2 drop-shadow text-center">{meal.label}</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => handleFoto(meal.key, e.target.files[0])}
+                  className="mt-2 mb-2 text-xs text-gray-300"
+                  disabled={loading}
+                />
+              </div>
+              {meals[meal.key]?.permitido && (
+                <span className="text-xs font-semibold text-gray-300 mt-1">Permitido: no suma ni resta puntos</span>
+              )}
+            </div>
           </div>
         ))}
       </div>

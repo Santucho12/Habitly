@@ -24,7 +24,7 @@ export default function Sidebar({ open, setOpen, children }) {
         role="navigation"
         aria-label="Menú principal"
       >
-        <div className="flex flex-col gap-4 items-center justify-center w-full mt-16">
+        <div className="flex flex-col gap-4 items-center justify-center w-full mt-16" style={{ marginTop: '136px' }}>
           {menu.map((item, idx) => (
             <button
               key={item.path}

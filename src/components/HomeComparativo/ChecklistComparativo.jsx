@@ -144,7 +144,7 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
   return (
     <div
       className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-5 mb-8 shadow-xl"
-      style={{ transform: 'scale(0.55)', transformOrigin: 'top left' }}
+      style={{ transform: 'scale(0.57)', transformOrigin: 'top left' }}
     >
       {/* Título eliminado por solicitud */}
       <div className="flex flex-col gap-6 mb-6">
@@ -162,23 +162,26 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
             <div key={act.key} className="flex items-center justify-between bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-3 mb-1 shadow-lg border border-gray-700">
               <div className="flex items-center gap-3">
                 {/* Iconos grandes */}
-                {act.key === 'gym' && <span role="img" aria-label="Gimnasio" className="text-5xl">🏋️‍♂️</span>}
-                {act.key === 'correr' && <span role="img" aria-label="Correr" className="text-5xl">🏃‍♂️</span>}
-                {act.key === 'caminar' && <span role="img" aria-label="Caminar" className="text-5xl">🚶‍♂️</span>}
+                {act.key === 'gym' && <span role="img" aria-label="Gimnasio" className="text-2xl">🏋️‍♂️</span>}
+                {act.key === 'correr' && <span role="img" aria-label="Correr" className="text-2xl">🏃‍♂️</span>}
+                {act.key === 'caminar' && <span role="img" aria-label="Caminar" className="text-2xl">🚶‍♂️</span>}
                 <input
                   type="checkbox"
                   checked={!!checked[act.key]}
                   onChange={usuarioType === 'yo' ? () => handleCheck(act.key) : undefined}
                   disabled={usuarioType !== 'yo' || !!checked[act.key]}
-                  className={`w-10 h-10 transition-all duration-200 $
+                  className={`w-6 h-6 transition-all duration-200 ${
                     act.key === 'gym' ? 'accent-green-500' :
                     act.key === 'correr' ? 'accent-blue-500' :
                     act.key === 'caminar' ? 'accent-cyan-300' : 'accent-blue-500'
                   } ${usuarioType !== 'yo' ? 'opacity-60 cursor-not-allowed' : ''}`}
                 />
-                <span className="font-bold text-white text-2xl tracking-wide w-full text-left">{act.label}</span>
+                <span className="font-bold text-white text-lg tracking-wide">{act.label}</span>
               </div>
-              {/* Eliminado: badges de puntos y progreso semanal */}
+              <div className="flex flex-col items-end gap-1">
+                <span className="bg-blue-500 text-white text-[7px] font-bold px-2 py-0.5 rounded-full shadow">+{act.points} pts</span>
+                <span className={`${badgeColor} text-white text-[7px] px-2 py-0.5 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
+              </div>
             </div>
           );
         })}

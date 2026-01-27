@@ -34,12 +34,12 @@ export default function Layout({ children }) {
       <div className="fixed inset-0 bg-black/80 z-10 pointer-events-none select-none" />
       {/* Sidebar y Topbar en la raíz visual */}
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      <Topbar open={sidebarOpen} setOpen={setSidebarOpen} />
       <div className="relative flex-1 flex flex-col z-20 w-full">
-        <Topbar open={sidebarOpen} setOpen={setSidebarOpen} />
         <main
           className="flex-1 p-4 overflow-y-auto"
           style={{
-            paddingTop: `calc(env(safe-area-inset-top, 0px) + 5rem + 200px)`
+            paddingTop: '7.3rem'
           }}
         >
           {activityName && (

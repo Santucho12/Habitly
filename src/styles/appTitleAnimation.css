@@ -1,0 +1,19 @@
+@keyframes app-title-fade-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(8px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-app-title {
+  animation: app-title-fade-slide 1.1s cubic-bezier(.6,-0.01,.3,1.01);
+  will-change: opacity, transform;
+}

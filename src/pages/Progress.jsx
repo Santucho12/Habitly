@@ -14,6 +14,7 @@ export default function ProgressPage() {
   const [peso, setPeso] = useState('');
   const [foto, setFoto] = useState(null);
   const [fotoUrl, setFotoUrl] = useState('');
+  const [previewFoto, setPreviewFoto] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -77,7 +78,7 @@ export default function ProgressPage() {
           Mes actual: {dayjs(mes).format('MMMM YYYY')}
         </div>
         {/* Carrusel de fotos y pesos históricos */}
-        <ProgressPhotoCompare />
+        {!previewFoto && <ProgressPhotoCompare />}
         {/* Formulario de registro mensual */}
         {!yaRegistrado && (
           <div className="text-gray-400 text-center mt-8">
@@ -91,45 +92,101 @@ export default function ProgressPage() {
             <div className="text-sm text-gray-300 mt-2">Foto de este mes</div>
           </div>
         )}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full" aria-describedby="progress-desc">
-          <span id="progress-desc" className="sr-only">Formulario para registrar tu peso y foto de progreso mensual</span>
-          <label className="font-semibold" htmlFor="peso-input">Peso (kg):</label>
-          <input
-            id="peso-input"
-            type="number"
-            step="0.1"
-            value={peso}
-            onChange={e => setPeso(e.target.value)}
-            disabled={yaRegistrado}
-            className="rounded px-2 py-2 text-black w-full"
-            aria-label="Peso en kilogramos"
-            tabIndex={0}
-          />
-          <label className="font-semibold" htmlFor="foto-input">Foto progreso:</label>
-          <input
-            id="foto-input"
-            type="file"
-            accept="image/*"
-            onChange={e => setFoto(e.target.files[0])}
-            disabled={yaRegistrado}
-            className="w-full"
-            aria-label="Subir foto de progreso"
-            tabIndex={0}
-          />
-          <button
-            type="submit"
-            className="bg-blue-600 text-white rounded-xl px-2 py-2 mt-2 font-bold text-lg hover:bg-blue-700 disabled:bg-gray-500 transition w-full"
-            disabled={loading || yaRegistrado}
-            aria-label={yaRegistrado ? 'Ya registrado' : loading ? 'Guardando progreso' : 'Guardar progreso'}
-            tabIndex={0}
-          >
-            {yaRegistrado ? 'Ya registrado' : loading ? 'Guardando...' : 'Guardar progreso'}
-          </button>
-          <div aria-live="polite" aria-atomic="true">
-            {success && <div className="text-green-400 text-center font-semibold" role="status">{success}</div>}
-            {error && <div className="text-red-400 text-center font-semibold" role="alert">{error}</div>}
+        {previewFoto ? (
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex items-center justify-between w-full mb-2">
+              {/* Flecha izquierda */}
+              <button className="w-10 h-10 flex items-center justify-center bg-gray-700 rounded-lg mr-2" style={{ minWidth: 40 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 18L9 12L15 6" stroke="#A0AEC0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              {/* Input de peso */}
+              <input
+                type="number"
+                step="0.1"
+                value={peso}
+                onChange={e => setPeso(e.target.value)}
+                className="text-3xl font-bold text-blue-200 bg-transparent border-b-2 border-blue-400 text-center w-24 focus:outline-none focus:border-blue-600"
+                placeholder="kg"
+                style={{ maxWidth: 100 }}
+                aria-label="Peso en kilogramos"
+              />
+              {/* Flecha derecha */}
+              <button className="w-10 h-10 flex items-center justify-center bg-gray-700 rounded-lg ml-2" style={{ minWidth: 40 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 6L15 12L9 18" stroke="#A0AEC0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <img
+              src={previewFoto}
+              alt="Previsualización foto progreso"
+              className="w-full h-[22rem] object-cover rounded-xl border-2 border-blue-400 shadow mb-2"
+              style={{ maxWidth: '100%', margin: '0 auto' }}
+            />
+            {/* Botón para volver a cargar otra foto */}
+            <button
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
+              onClick={() => setPreviewFoto('')}
+              type="button"
+            >
+              Cambiar foto
+            </button>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full" aria-describedby="progress-desc">
+            <span id="progress-desc" className="sr-only">Formulario para registrar tu peso y foto de progreso mensual</span>
+            <label className="font-semibold" htmlFor="peso-input">Peso (kg):</label>
+            <input
+              id="peso-input"
+              type="number"
+              step="0.1"
+              value={peso}
+              onChange={e => setPeso(e.target.value)}
+              disabled={yaRegistrado}
+              className="rounded px-2 py-2 text-black w-full"
+              aria-label="Peso en kilogramos"
+              tabIndex={0}
+            />
+            <label className="font-semibold" htmlFor="foto-input">Foto progreso:</label>
+            <input
+              id="foto-input"
+              type="file"
+              accept="image/*"
+              onChange={e => {
+                const file = e.target.files[0];
+                setFoto(file);
+                if (file && file.type && file.type.startsWith('image/')) {
+                  const reader = new FileReader();
+                  reader.onloadend = ev => {
+                    setPreviewFoto(ev.target.result);
+                  };
+                  reader.readAsDataURL(file);
+                } else {
+                  setPreviewFoto('');
+                }
+              }}
+              disabled={yaRegistrado}
+              className="w-full"
+              aria-label="Subir foto de progreso"
+              tabIndex={0}
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 text-white rounded-xl px-2 py-2 mt-2 font-bold text-lg hover:bg-blue-700 disabled:bg-gray-500 transition w-full"
+              disabled={loading || yaRegistrado}
+              aria-label={yaRegistrado ? 'Ya registrado' : loading ? 'Guardando progreso' : 'Guardar progreso'}
+              tabIndex={0}
+            >
+              {yaRegistrado ? 'Ya registrado' : loading ? 'Guardando...' : 'Guardar progreso'}
+            </button>
+            <div aria-live="polite" aria-atomic="true">
+              {success && <div className="text-green-400 text-center font-semibold" role="status">{success}</div>}
+              {error && <div className="text-red-400 text-center font-semibold" role="alert">{error}</div>}
+            </div>
+          </form>
+        )}
         {/* Gráfica de evolución de peso */}
         <ProgressChart />
       </div>

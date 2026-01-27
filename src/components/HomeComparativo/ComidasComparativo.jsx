@@ -39,7 +39,7 @@ function ComidasSlider({ comidas, readOnly }) {
       <div className="relative w-72 h-80 flex items-center justify-center">
             {(
           <button
-            className="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-700 text-white rounded-full w-8 h-8 flex items-center justify-center shadow hover:bg-gray-900"
+            className="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-700 text-white rounded-full w-8 h-8 flex items-center justify-center shadow hover:bg-gray-900 z-20"
             onClick={handlePrev}
             aria-label="Anterior"
           >
