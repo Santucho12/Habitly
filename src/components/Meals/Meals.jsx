@@ -1,7 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import { getDailyMeals, saveDailyMeals } from '../../services/meals';
+import { getDailyMeals, saveDailyMeals, uploadMealPhoto } from '../../services/meals';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../services/firebase';
+import { deleteField } from 'firebase/firestore';
 import dayjs from 'dayjs';
 
 
@@ -14,8 +17,8 @@ const MEALS = [
 
 const PUNTUACIONES = [
   { value: 5, label: 'Bien', color: 'bg-green-500', icon: '✅' },
-  { value: 3, label: 'Safa', color: 'bg-yellow-400', icon: '😐' },
-  { value: 0, label: 'Mal', color: 'bg-red-500', icon: '❌' },
+  { value: 2, label: 'Safa', color: 'bg-yellow-400', icon: '😐' },
+  { value: -2, label: 'Mal', color: 'bg-red-500', icon: '❌' },
 ];
 
 export default function Meals({ fecha }) {
@@ -42,22 +45,22 @@ export default function Meals({ fecha }) {
   }, [selectedDay]);
 
   // Calcular permitidos usados en la semana
-  useEffect(() => {
-    async function fetchPermitidosSemana() {
-      if (!user) return;
-      const startOfWeek = dayjs(selectedDay).startOf('week');
-      let totalPermitidos = 0;
-      for (let i = 0; i < 7; i++) {
-        const d = startOfWeek.add(i, 'day').format('YYYY-MM-DD');
-        const data = await getDailyMeals(user.uid, d);
-        if (data) {
-          MEALS.forEach(m => {
-            if (data[m.key]?.permitido) totalPermitidos++;
-          });
-        }
+  const fetchPermitidosSemana = async () => {
+    if (!user) return;
+    const startOfWeek = dayjs(selectedDay).startOf('week');
+    let totalPermitidos = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = startOfWeek.add(i, 'day').format('YYYY-MM-DD');
+      const data = await getDailyMeals(user.uid, d);
+      if (data) {
+        MEALS.forEach(m => {
+          if (data[m.key]?.permitido) totalPermitidos++;
+        });
       }
-      setPermitidosSemana(totalPermitidos);
     }
+    setPermitidosSemana(totalPermitidos);
+  };
+  useEffect(() => {
     fetchPermitidosSemana();
   }, [user, selectedDay]);
 
@@ -69,6 +72,8 @@ export default function Meals({ fecha }) {
       setLoading(false);
     });
   }, [user, selectedDay]);
+
+  // (Eliminada la declaración duplicada de handlePermitido)
 
   useEffect(() => {
     if (!user) return;
@@ -82,7 +87,7 @@ export default function Meals({ fecha }) {
   const handlePuntuacion = async (key, value) => {
     setError('');
     setSuccess('');
-    if (![0, 3, 5].includes(value)) {
+    if (![5, 2, -2].includes(value)) {
       setError('Puntuación inválida.');
       return;
     }
@@ -131,13 +136,22 @@ export default function Meals({ fecha }) {
   const handlePermitido = async (mealKey) => {
     setError('');
     setSuccess('');
-    // Si ya está marcado como permitido, no hacer nada
+    // Si ya está marcado como permitido, desmarcarlo
     if (meals[mealKey]?.permitido) {
-      setError('Ya marcaste esta comida como permitido.');
+      const newMeals = { ...meals, [mealKey]: { ...meals[mealKey] } };
+      delete newMeals[mealKey].permitido;
+      setMeals(newMeals);
+      // Eliminar el campo permitido en Firestore para el día seleccionado
+      const ref = doc(db, 'meals', `${user.uid}_${selectedDay}`);
+      await updateDoc(ref, { [`${mealKey}.permitido`]: deleteField() });
+      setTimeout(() => {
+        fetchPermitidosSemana();
+      }, 250);
+      setSuccess('Permitido desmarcado.');
       return;
     }
     // Contar permitidos en la semana
-    const startOfWeek = dayjs(fecha).startOf('week');
+    const startOfWeek = dayjs(selectedDay).startOf('week');
     let permitidosSemana = 0;
     for (let i = 0; i < 7; i++) {
       const d = startOfWeek.add(i, 'day').format('YYYY-MM-DD');
@@ -152,19 +166,20 @@ export default function Meals({ fecha }) {
       setError('Ya usaste tus 4 permitidos esta semana.');
       return;
     }
-    // Si ya puntuaste, no se puede marcar permitido
-    if (meals[mealKey]?.puntuacion !== undefined) {
-      setError('No puedes marcar permitido si ya cargaste puntuación.');
-      return;
-    }
-    // Marcar permitido en la comida
+    // Marcar permitido en la comida (borra puntuación si la hay)
     const newMeals = {
       ...meals,
-      [mealKey]: { ...meals[mealKey], permitido: true, puntuacion: undefined },
+      [mealKey]: { ...meals[mealKey], permitido: true }
     };
+    if (newMeals[mealKey].puntuacion === undefined) {
+      delete newMeals[mealKey].puntuacion;
+    }
     setMeals(newMeals);
-    await saveDailyMeals(user.uid, fecha, newMeals);
-    setSuccess('Permitido marcado. No resta puntos ni afecta racha.');
+    await saveDailyMeals(user.uid, selectedDay, newMeals);
+    setTimeout(() => {
+      fetchPermitidosSemana();
+    }, 250);
+    setSuccess('Permitido marcado. No suma ni resta puntos y se suma al contador.');
   };
 
   if (loading) return <div>Cargando comidas...</div>;
@@ -209,10 +224,11 @@ export default function Meals({ fecha }) {
             {/* Botón permitido arriba a la derecha */}
             <div className="absolute right-3 top-3 z-20">
               <button
-                className={`px-1 py-0.5 rounded-full text-[0.7rem] font-bold shadow transition-all duration-200 focus:outline-none bg-blue-600 flex items-center gap-1 ${meals[meal.key]?.permitido ? 'ring-2 ring-white scale-105' : 'hover:scale-105'}`}
+                className={`px-1 py-0.5 rounded-full text-[0.7rem] font-bold shadow transition-all duration-200 focus:outline-none flex items-center gap-1
+                  ${meals[meal.key]?.permitido ? 'bg-green-500 text-white animate-pulse ring-2 ring-green-300 scale-110' : 'bg-blue-600 text-white hover:scale-105'}`}
                 onClick={() => handlePermitido(meal.key)}
-                disabled={loading || meals[meal.key]?.puntuacion !== undefined || meals[meal.key]?.permitido}
-                title="Marcar permitido"
+                disabled={loading}
+                title={meals[meal.key]?.permitido ? "Desmarcar permitido" : "Marcar permitido"}
               >
                 <span role="img" aria-label="Permitido">🍽️</span>
                 <span>Permitido</span>
@@ -282,15 +298,21 @@ export default function Meals({ fecha }) {
           const maxPuntosDia = 20; // 4 comidas x 5 puntos
           let puntosDia = 0;
           MEALS.forEach(meal => {
-            if (meals[meal.key]?.puntuacion !== undefined && !meals[meal.key]?.permitido) {
+            // Si está marcado como permitido, no suma ni resta puntos
+            if (meals[meal.key]?.permitido) {
+              // No sumar ni restar puntos
+              return;
+            }
+            if (meals[meal.key]?.puntuacion !== undefined) {
               puntosDia += meals[meal.key]?.puntuacion;
             }
           });
+          // Permitir que el puntaje sea negativo
           return (
             <>
               <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-200 font-semibold">Puntos del día seleccionado:</span>
-                <span className="text-blue-400 text-lg font-bold">{puntosDia}/{maxPuntosDia}</span>
+                <span className="text-sm text-gray-200 font-semibold">Puntos del día seleccionado:</span>
+                <span className={`text-lg font-bold ${puntosDia < 0 ? 'text-red-400' : 'text-blue-400'}`}>{puntosDia}/{maxPuntosDia}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-200 font-semibold">Permitidos usados esta semana:</span>

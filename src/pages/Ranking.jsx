@@ -43,9 +43,9 @@ function Ranking() {
   const evolucion = yo?.evolucion || [2,2,1,1]; // ejemplo
   const compaEvolucion = compa?.evolucion || [1,1,2,2];
 
-  // Desglose de puntos (simulado)
-  const desgloseYo = yo?.desglose || {habitos: 50, comidas: 30, progreso: 20, logros: 10};
-  const desgloseCompa = compa?.desglose || {habitos: 40, comidas: 40, progreso: 15, logros: 5};
+  // Desglose de puntos (siempre reales, nunca simulados)
+  const desgloseYo = yo?.desglose || { habitos: 0, comidas: 0, progreso: 0, logros: 0 };
+  const desgloseCompa = compa?.desglose || { habitos: 0, comidas: 0, progreso: 0, logros: 0 };
 
   // Logros y rachas (simulado)
   const logrosYo = yo?.logros || ['Top 1', 'Racha 3 meses'];
@@ -53,11 +53,9 @@ function Ranking() {
   const rachaYo = yo?.racha || 3;
   const rachaCompa = compa?.racha || 1;
 
-  // Ranking histórico (simulado, ahora con puntos)
+  // Ranking histórico (solo muestra el mes actual con datos reales)
   const historial = [
-    {mes: '2025-11', yo: 120, compa: 110},
-    {mes: '2025-12', yo: 150, compa: 130},
-    {mes: '2026-01', yo: yo?.puntos ?? '-', compa: compa?.puntos ?? '-'}
+    { mes: mes, yo: yo?.puntos ?? '-', compa: compa?.puntos ?? '-' }
   ];
 
   return (
@@ -78,7 +76,7 @@ function Ranking() {
             <tr className="bg-blue-900 text-blue-300 font-bold animate-fade-in">
               <td className="py-2 px-2">{yo.posicion}</td>
               <td className="py-2 px-2">Tú</td>
-              <td className="py-2 px-2">{yo.puntos}</td>
+                <td className="py-2 px-2">{yo?.puntos ?? 0}</td>
               <td className="py-2 px-2 text-2xl">{medalla(yo.posicion)}</td>
             </tr>
           )}
@@ -86,7 +84,7 @@ function Ranking() {
             <tr className="bg-green-900 text-green-300 font-bold animate-fade-in">
               <td className="py-2 px-2">{compa.posicion}</td>
               <td className="py-2 px-2">Compañero</td>
-              <td className="py-2 px-2">{compa.puntos}</td>
+                <td className="py-2 px-2">{compa?.puntos ?? 0}</td>
               <td className="py-2 px-2 text-2xl">{medalla(compa.posicion)}</td>
             </tr>
           )}
@@ -99,11 +97,11 @@ function Ranking() {
         <div className="flex gap-6 justify-center">
           <div className="bg-gradient-to-br from-blue-700 to-blue-900 shadow-lg rounded-2xl px-6 py-5 flex flex-col items-center w-44">
             <span className="font-semibold text-blue-200 text-lg mb-2">Tú</span>
-            <span className="text-4xl font-bold text-white drop-shadow">340</span>
+            <span className="text-4xl font-bold text-white drop-shadow">{yo?.puntos ?? 0}</span>
           </div>
           <div className="bg-gradient-to-br from-green-700 to-green-900 shadow-lg rounded-2xl px-6 py-5 flex flex-col items-center w-44">
             <span className="font-semibold text-green-200 text-lg mb-2">Compañero</span>
-            <span className="text-4xl font-bold text-white drop-shadow">296</span>
+            <span className="text-4xl font-bold text-white drop-shadow">{compa?.puntos ?? 0}</span>
           </div>
         </div>
       </div>

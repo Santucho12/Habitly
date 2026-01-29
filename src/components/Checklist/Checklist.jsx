@@ -42,7 +42,8 @@ export default function Checklist({ showAddHabitForm = true }) {
       const todayData = await getDailyActivity(user.uid, today);
       setChecked(todayData || {});
       // Semana
-      const weekStart = dayjs().startOf('week');
+      // Ajustar para que la semana inicie en lunes (0 = lunes)
+      const weekStart = dayjs().startOf('week').add(1, 'day');
       let weekArr = [];
       for (let i = 0; i < 7; i++) {
         const d = weekStart.add(i, 'day').format('YYYY-MM-DD');
@@ -149,43 +150,60 @@ export default function Checklist({ showAddHabitForm = true }) {
     <div className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-5 mb-8 shadow-xl">
       <h3 className="text-2xl font-extrabold mb-4 text-blue-300 text-center drop-shadow">Check-list diaria de actividades</h3>
       <div className="flex flex-col gap-4 mb-6">
-        {ACTIVITIES.map(act => {
-          const daysDone = weekActivities.filter(d => d[act.key]).length;
-          // Buscar meta semanal para la actividad
-          const habit = habits.find(h => h.type === act.key || h.name?.toLowerCase() === act.key);
-          const meta = habit?.meta || habit?.goal || 1;
-          // Color badge según actividad
-          let badgeColor = '';
-          if (act.key === 'gym') badgeColor = 'bg-green-500';
-          else if (act.key === 'caminar') badgeColor = 'bg-cyan-300';
-          else if (act.key === 'correr') badgeColor = 'bg-blue-500';
-          return (
-            <div key={act.key} className="flex items-center justify-between bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-3 mb-1 shadow-lg border border-gray-700">
-              <div className="flex items-center gap-3">
-                {/* Iconos grandes */}
-                {act.key === 'gym' && <span role="img" aria-label="Gimnasio" className="text-2xl">🏋️‍♂️</span>}
-                {act.key === 'correr' && <span role="img" aria-label="Correr" className="text-2xl">🏃‍♂️</span>}
-                {act.key === 'caminar' && <span role="img" aria-label="Caminar" className="text-2xl">🚶‍♂️</span>}
-                <input
-                  type="checkbox"
-                  checked={!!checked[act.key]}
-                  onChange={() => handleCheck(act.key)}
-                  disabled={!!checked[act.key]}
-                  className={`w-6 h-6 transition-all duration-200 ${
-                    act.key === 'gym' ? 'accent-green-500' :
-                    act.key === 'correr' ? 'accent-blue-500' :
-                    act.key === 'caminar' ? 'accent-cyan-300' : 'accent-blue-500'
-                  }`}
-                />
-                <span className="font-bold text-white text-lg tracking-wide">{act.label}</span>
+        {habits.length === 0 ? (
+          <div className="text-center text-blue-200 font-semibold py-4">Agrega tu primer hábito para comenzar tu check-list.</div>
+        ) : (
+          habits.map(habit => {
+            // Icono, color y puntos según tipo/nombre
+            let icon = '✅';
+            let badgeColor = 'bg-blue-500';
+            let points = 10;
+            const nameLower = habit.name?.toLowerCase() || '';
+            if (habit.type === 'gym' || nameLower === 'gimnasio' || nameLower === 'gym') {
+              icon = '🏋️‍♂️';
+              badgeColor = 'bg-green-500';
+              points = 10;
+            } else if (habit.type === 'correr' || nameLower === 'correr') {
+              icon = '🏃‍♂️';
+              badgeColor = 'bg-blue-500';
+              points = 15;
+            } else if (habit.type === 'caminar' || nameLower === 'caminar') {
+              icon = '🚶‍♂️';
+              badgeColor = 'bg-cyan-300';
+              points = 8;
+            } else if (nameLower.includes('correr')) {
+              icon = '🏃‍♂️';
+              badgeColor = 'bg-blue-500';
+              points = 15;
+            } else if (nameLower.includes('caminar')) {
+              icon = '🚶‍♂️';
+              badgeColor = 'bg-cyan-300';
+              points = 8;
+            }
+            // Progreso semanal
+            const daysDone = weekActivities.filter(d => d[habit.type] || d[nameLower]).length;
+            const meta = habit?.meta || habit?.goal || 1;
+            return (
+              <div key={habit.id || habit.type || habit.name} className="flex items-center justify-between bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-3 mb-1 shadow-lg border border-gray-700">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{icon}</span>
+                  <input
+                    type="checkbox"
+                    checked={!!checked[habit.type] || !!checked[nameLower]}
+                    onChange={() => handleCheck(habit.type || nameLower)}
+                    disabled={!!checked[habit.type] || !!checked[nameLower]}
+                    className={`w-6 h-6 transition-all duration-200 ${badgeColor}`}
+                  />
+                  <span className="font-bold text-white text-lg tracking-wide">{habit.name}</span>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="bg-blue-500 text-white text-[0.66rem] font-bold px-2 py-1 rounded-full shadow">+{points} pts</span>
+                  <span className={`${badgeColor} text-white text-[0.66rem] px-2 py-1 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
+                </div>
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="bg-blue-500 text-white text-[0.66rem] font-bold px-2 py-1 rounded-full shadow">+{act.points} pts</span>
-                <span className={`${badgeColor} text-white text-[0.66rem] px-2 py-1 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
       {/* Mensaje motivacional o error estilizado */}
       {error && <div className="bg-red-100 border border-red-400 text-red-700 text-sm rounded-lg px-3 py-2 mb-2 text-center font-semibold shadow">{error}</div>}
@@ -348,7 +366,7 @@ export default function Checklist({ showAddHabitForm = true }) {
             }
             try {
               const habitObj = {
-                userId: user.uid,
+                owner: user.uid,
                 name: newHabitName.trim(),
                 type: newHabitType,
                 meta: Number(newHabitMeta) || 1,
@@ -366,13 +384,9 @@ export default function Checklist({ showAddHabitForm = true }) {
             }
           }}
         >
-          <input
-            type="text"
-            className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Nombre del hábito"
-            value={newHabitName}
-            onChange={e => setNewHabitName(e.target.value)}
-          />
+          <div className="text-gray-300 text-sm font-semibold mb-1">
+            Elegí la categoría del hábito :
+          </div>
           <select
             className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none"
             value={newHabitType}
@@ -382,14 +396,23 @@ export default function Checklist({ showAddHabitForm = true }) {
             <option value="correr">Correr</option>
             <option value="caminar">Caminar</option>
           </select>
-          <input
-            type="number"
-            min={1}
-            className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none"
-            placeholder="Meta semanal"
-            value={newHabitMeta}
-            onChange={e => setNewHabitMeta(e.target.value)}
-          />
+          <div className="flex flex-col gap-1">
+            <label className="text-gray-300 text-sm font-semibold" htmlFor="metaInput">
+              ¿Cuántas veces por semana quieres cumplir este hábito?
+            </label>
+            <input
+              id="metaInput"
+              type="number"
+              min={1}
+              step={1}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none"
+              placeholder="Ej: 3"
+              value={newHabitMeta}
+              onChange={e => setNewHabitMeta(Number(e.target.value))}
+            />
+          </div>
           <button
             type="submit"
             className="bg-green-600 text-white font-bold py-2 rounded shadow hover:bg-green-700 transition"

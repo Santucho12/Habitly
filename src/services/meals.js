@@ -1,6 +1,17 @@
+import { storage } from './firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+// Sube una foto de comida a Firebase Storage y devuelve la URL
+export async function uploadMealPhoto(userId, fecha, mealKey, file) {
+	const storageRef = ref(storage, `meals/${userId}/${fecha}_${mealKey}_${file.name}`);
+	await uploadBytes(storageRef, file);
+	const url = await getDownloadURL(storageRef);
+	return url;
+}
 
 import { db } from './firebase';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { calcularYActualizarRanking } from '../utils/calcularRanking';
+import dayjs from 'dayjs';
 
 // Modelo de comidas diarias
 // { userId, fecha, desayuno: {foto, puntuacion}, almuerzo: {...}, merienda: {...}, cena: {...}, excepcion, bonoPerfecto }
@@ -8,6 +19,9 @@ import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 export async function saveDailyMeals(userId, fecha, data) {
 	const ref = doc(db, 'meals', `${userId}_${fecha}`);
 	await setDoc(ref, { userId, fecha, ...data }, { merge: true });
+	// Actualiza ranking automáticamente
+	const mes = dayjs(fecha).format('YYYY-MM');
+	await calcularYActualizarRanking(mes);
 }
 
 export async function getDailyMeals(userId, fecha) {
@@ -29,7 +43,7 @@ export async function hasExceptionThisWeek(userId, weekKey) {
 }
 
 // Obtiene la última comida registrada de la semana actual
-import dayjs from 'dayjs';
+
 export async function getLastMeal(userId) {
 	const today = dayjs();
 	for (let i = 0; i < 7; i++) {

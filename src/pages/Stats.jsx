@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import EmptyState from '../components/EmptyState';
 import { getMonthlyRanking } from '../services/ranking';
+import { getMonthlyHabits, getMonthlyMeals, getMonthlyProgressPoints, getMonthlyLogros } from '../utils/puntosMes';
+import { getAllUsers } from '../services/users';
 import { getAuth } from 'firebase/auth';
 import dayjs from 'dayjs';
 
@@ -8,6 +10,7 @@ export default function StatsPage() {
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [prevPos, setPrevPos] = useState(null);
+  const [puntosTotales, setPuntosTotales] = useState({ yo: 0, compa: 0 });
   const user = getAuth().currentUser;
   const mes = dayjs().format('YYYY-MM');
   const animRowRef = useRef(null);
@@ -29,8 +32,41 @@ export default function StatsPage() {
       setRanking(usuarios);
       setLoading(false);
     });
+
+    // Calcular suma real de puntos para el usuario y su compañero
+    async function calcularPuntos() {
+      if (!user) return;
+      // Suma para el usuario actual
+      const [habitos, comidas, progreso, logros] = await Promise.all([
+        getMonthlyHabits(user.uid, mes),
+        getMonthlyMeals(user.uid, mes),
+        getMonthlyProgressPoints(user.uid, mes),
+        getMonthlyLogros(user.uid, mes)
+      ]);
+      let compaId = null;
+      // Buscar el id del compañero (el primer usuario distinto al actual)
+      const allUsers = await getAllUsers();
+      const compaUser = allUsers.find(u => u.uid !== user.uid);
+      if (compaUser) {
+        compaId = compaUser.uid;
+      }
+      let compaHab = 0, compaCom = 0, compaProg = 0, compaLog = 0;
+      if (compaId) {
+        [compaHab, compaCom, compaProg, compaLog] = await Promise.all([
+          getMonthlyHabits(compaId, mes),
+          getMonthlyMeals(compaId, mes),
+          getMonthlyProgressPoints(compaId, mes),
+          getMonthlyLogros(compaId, mes)
+        ]);
+      }
+      setPuntosTotales({
+        yo: habitos + comidas + progreso + logros,
+        compa: compaHab + compaCom + compaProg + compaLog
+      });
+    }
+    calcularPuntos();
     // eslint-disable-next-line
-  }, [mes]);
+  }, [mes, user]);
 
   // Ranking mensual con medallas
   const yo = ranking.find(u => u.userId === user?.uid);
@@ -42,8 +78,37 @@ export default function StatsPage() {
   const compaEvolucion = compa?.evolucion || [1,1,2,2];
 
   // Desglose de puntos (simulado)
-  const desgloseYo = yo?.desglose || {habitos: 50, comidas: 30, progreso: 20, logros: 10};
-  const desgloseCompa = compa?.desglose || {habitos: 40, comidas: 40, progreso: 15, logros: 5};
+  const [desglose, setDesglose] = useState({ yo: { habitos: 0, comidas: 0, progreso: 0, logros: 0 }, compa: { habitos: 0, comidas: 0, progreso: 0, logros: 0 } });
+
+  useEffect(() => {
+    async function calcularDesglose() {
+      if (!user) return;
+      const [habitos, comidas, progreso, logros] = await Promise.all([
+        getMonthlyHabits(user.uid, mes),
+        getMonthlyMeals(user.uid, mes),
+        getMonthlyProgressPoints(user.uid, mes),
+        getMonthlyLogros(user.uid, mes)
+      ]);
+      let compaId = null;
+      const allUsers = await getAllUsers();
+      const compaUser = allUsers.find(u => u.uid !== user.uid);
+      let compaHab = 0, compaCom = 0, compaProg = 0, compaLog = 0;
+      if (compaUser) {
+        compaId = compaUser.uid;
+        [compaHab, compaCom, compaProg, compaLog] = await Promise.all([
+          getMonthlyHabits(compaId, mes),
+          getMonthlyMeals(compaId, mes),
+          getMonthlyProgressPoints(compaId, mes),
+          getMonthlyLogros(compaId, mes)
+        ]);
+      }
+      setDesglose({
+        yo: { habitos, comidas, progreso, logros },
+        compa: { habitos: compaHab, comidas: compaCom, progreso: compaProg, logros: compaLog }
+      });
+    }
+    calcularDesglose();
+  }, [mes, user]);
 
   // Logros y rachas (simulado)
   const logrosYo = yo?.logros || ['Top 1', 'Racha 3 meses'];
@@ -51,12 +116,45 @@ export default function StatsPage() {
   const rachaYo = yo?.racha || 3;
   const rachaCompa = compa?.racha || 1;
 
-  // Ranking histórico (simulado, ahora con puntos)
-  const historial = [
-    {mes: '2025-11', yo: 120, compa: 110},
-    {mes: '2025-12', yo: 150, compa: 130},
-    {mes: '2026-01', yo: yo?.puntos ?? '-', compa: compa?.puntos ?? '-'}
-  ];
+  // Ranking histórico real de puntos
+  const [historial, setHistorial] = useState([]);
+  useEffect(() => {
+    async function calcularHistorial() {
+      if (!user) return;
+      // Obtener los últimos 6 meses (incluyendo el actual)
+      const meses = [];
+      for (let i = 5; i >= 0; i--) {
+        meses.push(dayjs().subtract(i, 'month').format('YYYY-MM'));
+      }
+      const allUsers = await getAllUsers();
+      const compaUser = allUsers.find(u => u.uid !== user.uid);
+      const compaId = compaUser ? compaUser.uid : null;
+      const historialData = await Promise.all(meses.map(async m => {
+        const [yoHab, yoCom, yoProg, yoLog] = await Promise.all([
+          getMonthlyHabits(user.uid, m),
+          getMonthlyMeals(user.uid, m),
+          getMonthlyProgressPoints(user.uid, m),
+          getMonthlyLogros(user.uid, m)
+        ]);
+        let compaHab = 0, compaCom = 0, compaProg = 0, compaLog = 0;
+        if (compaId) {
+          [compaHab, compaCom, compaProg, compaLog] = await Promise.all([
+            getMonthlyHabits(compaId, m),
+            getMonthlyMeals(compaId, m),
+            getMonthlyProgressPoints(compaId, m),
+            getMonthlyLogros(compaId, m)
+          ]);
+        }
+        return {
+          mes: m,
+          yo: yoHab + yoCom + yoProg + yoLog,
+          compa: compaHab + compaCom + compaProg + compaLog
+        };
+      }));
+      setHistorial(historialData);
+    }
+    calcularHistorial();
+  }, [user]);
 
   return (
     <div className="w-full max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-2 sm:p-6 mt-4 sm:mt-8">
@@ -97,11 +195,11 @@ export default function StatsPage() {
           <div className="flex flex-row gap-1 sm:gap-4 justify-center w-full">
             <div className="bg-gradient-to-br from-blue-700 to-blue-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-blue-200 text-lg mb-2">Tú</span>
-            <span className="text-4xl font-bold text-white drop-shadow">340</span>
+            <span className="text-4xl font-bold text-white drop-shadow">{puntosTotales.yo}</span>
           </div>
             <div className="bg-gradient-to-br from-green-700 to-green-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-green-200 text-lg mb-2">Compañero</span>
-            <span className="text-4xl font-bold text-white drop-shadow">296</span>
+            <span className="text-4xl font-bold text-white drop-shadow">{puntosTotales.compa}</span>
           </div>
         </div>
       </div>
@@ -113,19 +211,19 @@ export default function StatsPage() {
             <div className="bg-gradient-to-br from-blue-600 to-blue-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-blue-200 text-lg mb-2">Tú</span>
             <ul className="text-white text-base font-medium space-y-1">
-              <li>Hábitos: <span className="font-bold text-blue-300">{desgloseYo.habitos}</span></li>
-              <li>Comidas: <span className="font-bold text-blue-300">{desgloseYo.comidas}</span></li>
-              <li>Progreso: <span className="font-bold text-blue-300">{desgloseYo.progreso}</span></li>
-              <li>Logros: <span className="font-bold text-blue-300">{desgloseYo.logros}</span></li>
+              <li>Hábitos: <span className="font-bold text-blue-300">{desglose.yo.habitos}</span></li>
+              <li>Comidas: <span className="font-bold text-blue-300">{desglose.yo.comidas}</span></li>
+              <li>Progreso: <span className="font-bold text-blue-300">{desglose.yo.progreso}</span></li>
+              <li>Logros: <span className="font-bold text-blue-300">{desglose.yo.logros}</span></li>
             </ul>
           </div>
             <div className="bg-gradient-to-br from-green-600 to-green-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-green-200 text-lg mb-2">Compañero</span>
             <ul className="text-white text-base font-medium space-y-1">
-              <li>Hábitos: <span className="font-bold text-green-300">{desgloseCompa.habitos}</span></li>
-              <li>Comidas: <span className="font-bold text-green-300">{desgloseCompa.comidas}</span></li>
-              <li>Progreso: <span className="font-bold text-green-300">{desgloseCompa.progreso}</span></li>
-              <li>Logros: <span className="font-bold text-green-300">{desgloseCompa.logros}</span></li>
+              <li>Hábitos: <span className="font-bold text-green-300">{desglose.compa.habitos}</span></li>
+              <li>Comidas: <span className="font-bold text-green-300">{desglose.compa.comidas}</span></li>
+              <li>Progreso: <span className="font-bold text-green-300">{desglose.compa.progreso}</span></li>
+              <li>Logros: <span className="font-bold text-green-300">{desglose.compa.logros}</span></li>
             </ul>
           </div>
         </div>

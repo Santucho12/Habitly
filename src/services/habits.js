@@ -1,11 +1,16 @@
 
 import { db } from './firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { calcularYActualizarRanking } from '../utils/calcularRanking';
+import dayjs from 'dayjs';
 
 // Guarda el check diario de actividades físicas
 export async function saveDailyActivity(userId, date, data) {
 	const ref = doc(db, 'habits', `${userId}_${date}`);
 	await setDoc(ref, { userId, date, ...data }, { merge: true });
+	// Actualiza ranking automáticamente
+	const mes = dayjs(date).format('YYYY-MM');
+	await calcularYActualizarRanking(mes);
 }
 
 // Obtiene el check diario de actividades físicas

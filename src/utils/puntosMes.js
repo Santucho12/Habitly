@@ -1,0 +1,82 @@
+// Funciones para obtener los puntos reales de cada usuario en el mes actual
+import { getDailyMeals } from '../services/meals';
+import { getMonthlyProgress } from '../services/progress';
+import { getDailyActivity } from '../services/habits';
+import { getUserLogros } from '../services/logros';
+import dayjs from 'dayjs';
+// Importar lógica real de puntos
+import { calcularPuntosDia } from './points';
+
+// Devuelve un array con todas las fechas del mes en formato YYYY-MM-DD
+function getAllDatesOfMonth(mes) {
+  const [year, month] = mes.split('-').map(Number);
+  const firstDay = dayjs(`${year}-${month}-01`);
+  const daysInMonth = firstDay.daysInMonth();
+  return Array.from({ length: daysInMonth }, (_, i) => firstDay.add(i, 'day').format('YYYY-MM-DD'));
+}
+
+// Suma puntos de hábitos del mes
+export async function getMonthlyHabits(uid, mes) {
+  let total = 0;
+  const fechas = getAllDatesOfMonth(mes);
+  for (const fecha of fechas) {
+    const data = await getDailyActivity(uid, fecha);
+    // Sumar puntos de actividades físicas según lógica real
+    if (data) {
+      total += calcularPuntosDia({
+        gym: data.gym,
+        correr: data.correr,
+        caminar: data.caminar,
+        comidas: [], // No suma comidas aquí
+        bonoPerfecto: false,
+        rachaGimnasio: 0,
+        excepcion: false
+      });
+    }
+  }
+  return total;
+}
+
+// Suma puntos de comidas del mes
+export async function getMonthlyMeals(uid, mes) {
+  let total = 0;
+  const fechas = getAllDatesOfMonth(mes);
+  for (const fecha of fechas) {
+    const data = await getDailyMeals(uid, fecha);
+    if (data) {
+      // Sumar puntos de comidas según lógica real
+      const comidas = ['desayuno','almuerzo','merienda','cena'].map(key => data[key] || {});
+      total += calcularPuntosDia({
+        gym: false,
+        correr: false,
+        caminar: false,
+        comidas,
+        bonoPerfecto: data.bonoPerfecto,
+        rachaGimnasio: 0,
+        excepcion: data.excepcion
+      });
+    }
+  }
+  return total;
+}
+
+// Suma puntos de progreso del mes
+export async function getMonthlyProgressPoints(uid, mes) {
+  // Asume que getMonthlyProgress devuelve un array de registros con campo 'puntos' o 'peso'
+  const progresos = await getMonthlyProgress(uid, mes);
+  if (!progresos) return 0;
+  // Si es un array de progresos, suma los puntos
+  if (Array.isArray(progresos)) {
+    return progresos.reduce((acc, p) => acc + (p.puntos || 0), 0);
+  }
+  // Si es un solo objeto, retorna puntos o 0
+  return progresos.puntos || 0;
+}
+
+// Suma puntos de logros del mes
+export async function getMonthlyLogros(uid, mes) {
+  // Asume que getUserLogros devuelve un array de logros con campo 'puntos' y 'fecha'
+  const logros = await getUserLogros(uid);
+  if (!logros) return 0;
+  return logros.filter(l => l.fecha && l.fecha.startsWith(mes)).reduce((acc, l) => acc + (l.puntos || 0), 0);
+}

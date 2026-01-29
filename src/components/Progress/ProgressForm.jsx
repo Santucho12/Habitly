@@ -87,7 +87,7 @@ export default function ProgressForm({ mes }) {
       >
         <h3 className="text-lg font-bold mb-2 text-blue-200 text-center">Progreso mensual</h3>
         <label className="text-white">Peso (kg):
-          <input type="number" step="0.1" value={peso} onChange={e => setPeso(e.target.value)} disabled={yaRegistrado} className="rounded px-2 py-1 ml-2 text-black w-full" />
+          <input type="number" step="0.1" value={peso} onChange={e => setPeso(e.target.value)} className="rounded px-2 py-1 ml-2 text-black w-full" />
         </label>
         <label className="text-white">Foto progreso:</label>
         <ProgressPhotoUpload
@@ -109,8 +109,8 @@ export default function ProgressForm({ mes }) {
           loading={loading}
           yaRegistrado={yaRegistrado}
         />
-        <button type="submit" className="bg-blue-600 text-white rounded px-4 py-2 mt-2 disabled:bg-gray-500 w-full" disabled={loading || yaRegistrado}>
-          {yaRegistrado ? 'Ya registrado' : loading ? 'Guardando...' : 'Guardar progreso'}
+        <button type="submit" className="bg-blue-600 text-white rounded px-4 py-2 mt-2 disabled:bg-gray-500 w-full" disabled={loading}>
+          {loading ? 'Guardando...' : 'Guardar progreso'}
         </button>
         {success && <div className="text-green-400 text-center">{success}</div>}
         {error && <div className="text-red-400 text-center">{error}</div>}
