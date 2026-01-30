@@ -2,6 +2,25 @@ import React, { useEffect, useState } from 'react';
 import EmptyState from '../components/EmptyState';
 import { getMonthlyRanking } from '../services/ranking';
 import { getMonthlyHabits, getMonthlyMeals, getMonthlyProgressPoints, getMonthlyLogros } from '../utils/puntosMes';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+
+// Importar dayjs para fechas
+
+// Importar savePuntosMesToLocal desde Meals (o definir aquí si es necesario)
+async function savePuntosMesToLocal(uid) {
+  const mes = dayjs().format('YYYY-MM');
+  const [year, month] = mes.split('-').map(Number);
+  // No override, solo cálculo global
+  const comidas = await getMonthlyMeals(uid, mes);
+  const habitos = await getMonthlyHabits(uid, mes);
+  const progreso = await getMonthlyProgressPoints(uid, mes);
+  const logros = await getMonthlyLogros(uid, mes);
+  const puntosMes = comidas + habitos + progreso + logros;
+  const data = { mes, puntosMes, desglose: { comidas, habitos, progreso, logros } };
+  localStorage.setItem('puntosMes', JSON.stringify(data));
+  // Log para debug
+  console.log('[Habitly][Stats] Puntos recalculados y guardados en localStorage:', data);
+}
 import { getAllUsers } from '../services/users';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
@@ -16,6 +35,34 @@ export default function StatsPage() {
   const [puntosTotales, setPuntosTotales] = useState({ yo: 0, compa: 0 });
   const [user, setUser] = useState(null);
   const mes = dayjs().format('YYYY-MM');
+  // Leer puntos y desglose de localStorage si existen
+  const getLocalPuntos = () => {
+    try {
+      const data = JSON.parse(localStorage.getItem('puntosMes'));
+      if (data && data.mes === mes) return data;
+    } catch {}
+    return null;
+  };
+  const [localPuntos, setLocalPuntos] = useState(getLocalPuntos());
+
+  // Escuchar cambios en localStorage y foco de ventana para recargar puntos
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === 'puntosMes') {
+        setLocalPuntos(getLocalPuntos());
+      }
+    };
+    const handleFocus = () => {
+      setLocalPuntos(getLocalPuntos());
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [mes]);
+
 
   useEffect(() => {
     // Get current user from Firebase Auth
@@ -23,16 +70,62 @@ export default function StatsPage() {
     setUser(auth.currentUser);
   }, []);
 
+
+    // Escuchar cambios en meals, habits, progress y logros del usuario y recalcular puntosMes
+    useEffect(() => {
+      if (!user) return;
+      const mes = dayjs().format('YYYY-MM');
+      // Fechas del mes actual
+      const [year, month] = mes.split('-').map(Number);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const fechas = Array.from({ length: daysInMonth }, (_, i) => dayjs(`${mes}-01`).add(i, 'day').format('YYYY-MM-DD'));
+
+      // Meals
+      const mealsUnsubs = fechas.map(fecha =>
+        onSnapshot(
+          doc(db, 'meals', `${user.uid}_${fecha}`),
+          () => savePuntosMesToLocal(user.uid)
+        )
+      );
+      // Habits
+      const habitsUnsubs = fechas.map(fecha =>
+        onSnapshot(
+          doc(db, 'habits', `${user.uid}_${fecha}`),
+          () => savePuntosMesToLocal(user.uid)
+        )
+      );
+      // Progress
+      const progressUnsub = onSnapshot(
+        doc(db, 'progress', `${user.uid}_${mes}`),
+        () => savePuntosMesToLocal(user.uid)
+      );
+      // Logros
+      const logrosUnsub = onSnapshot(
+        query(collection(db, 'logros'), where('userId', '==', user.uid)),
+        () => savePuntosMesToLocal(user.uid)
+      );
+
+      return () => {
+        mealsUnsubs.forEach(unsub => unsub && unsub());
+        habitsUnsubs.forEach(unsub => unsub && unsub());
+        if (progressUnsub) progressUnsub();
+        if (logrosUnsub) logrosUnsub();
+      };
+    }, [user]);
+
   useEffect(() => {
     if (!user) return;
     async function fetchPuntosMes() {
-      // Leer puntosMes de Firestore para usuario y compañero
+      // Si hay puntos en localStorage, usarlos para el usuario
+      if (localPuntos) {
+        setPuntosTotales(pt => ({ ...pt, yo: localPuntos.puntosMes }));
+      }
+      // Leer puntosMes de Firestore para compañero
       const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
-      let puntosYo = 0, puntosCompa = 0;
+      let puntosCompa = 0;
       let compaId = null;
       if (userSnap.exists()) {
-        puntosYo = userSnap.data().puntosMes || 0;
         compaId = userSnap.data().companeroId;
       }
       if (compaId) {
@@ -42,7 +135,7 @@ export default function StatsPage() {
           puntosCompa = compaSnap.data().puntosMes || 0;
         }
       }
-      setPuntosTotales({ yo: puntosYo, compa: puntosCompa });
+      setPuntosTotales(pt => ({ ...pt, compa: puntosCompa }));
     }
     fetchPuntosMes();
   }, [user]);
@@ -62,14 +155,14 @@ export default function StatsPage() {
   useEffect(() => {
     async function fetchDesgloseMes() {
       if (!user) return;
-      // Leer desgloseMes de Firestore para usuario y compañero
+      // Si hay desglose en localStorage, usarlo para el usuario
+      let desgloseYo = localPuntos?.desglose || { habitos: 0, comidas: 0, progreso: 0, logros: 0 };
+      // Leer desgloseMes de Firestore para compañero
       const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
-      let desgloseYo = { habitos: 0, comidas: 0 };
       let desgloseCompa = { habitos: 0, comidas: 0 };
       let compaId = null;
       if (userSnap.exists()) {
-        desgloseYo = userSnap.data().desgloseMes || { habitos: 0, comidas: 0 };
         compaId = userSnap.data().companeroId;
       }
       if (compaId) {

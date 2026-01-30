@@ -32,7 +32,10 @@ export async function getDailyMeals(userId, fecha) {
 
 export async function updateDailyMealField(userId, fecha, field, value) {
 	const ref = doc(db, 'meals', `${userId}_${fecha}`);
-	await updateDoc(ref, { [field]: value });
+		await updateDoc(ref, { [field]: value });
+		// Actualiza ranking automáticamente
+		const mes = dayjs(fecha).format('YYYY-MM');
+		await calcularYActualizarRanking(mes);
 }
 
 // Validar si ya hay excepción en la semana (para 5.5)

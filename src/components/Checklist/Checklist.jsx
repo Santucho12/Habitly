@@ -5,7 +5,7 @@ import { saveDailyActivity, getDailyActivity } from '../../services/habits';
 import { calcularPuntosDia } from '../../utils/points';
 import { actualizarRacha } from '../../utils/streaks';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+// import { savePuntosMesToLocalAndFirestore } from '../../utils/savePuntosMesToLocalAndFirestore';
 import dayjs from 'dayjs';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
 dayjs.extend(weekOfYear);
@@ -110,6 +110,11 @@ export default function Checklist({ showAddHabitForm = true }) {
     setChecked(newChecked);
     setError('');
     await saveDailyActivity(user.uid, today, newChecked);
+    // Recalcular y guardar puntos del mes en localStorage
+    const mes = dayjs().format('YYYY-MM');
+    // Ya no es necesario llamar aquí, el listener global lo recalcula automáticamente
+  // Función para recalcular y guardar puntos del mes en localStorage
+
 
     // --- Lógica de puntos y rachas ---
     // Obtener datos previos del usuario

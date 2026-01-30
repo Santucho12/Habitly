@@ -9,9 +9,11 @@ export function calcularPuntosDia({ gym, correr, caminar, comidas, bonoPerfecto,
 	if (gym) puntos += 10;
 	if (correr) puntos += 15;
 	if (caminar) puntos += 8;
-	if (comidas && comidas.length === 4) {
+	if (comidas && comidas.length > 0) {
+		// Sumar puntos de todas las comidas cargadas (aunque falten)
 		puntos += comidas.reduce((acc, c) => acc + (c?.puntuacion || 0), 0);
-		if (comidas.every(c => c?.puntuacion === 5)) puntos *= 1.5;
+		// Si las 4 comidas existen y todas son 5, aplicar bono perfecto
+		if (comidas.length === 4 && comidas.every(c => c?.puntuacion === 5)) puntos *= 1.5;
 	}
 	if (rachaGimnasio >= 14) puntos *= 1.5;
 	if (excepcion) {

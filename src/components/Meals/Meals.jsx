@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
 import { getDailyMeals, saveDailyMeals } from '../../services/meals';
@@ -17,20 +16,75 @@ const MEALS = [
 ];
 
 const PUNTUACIONES = [
-  { value: 5, label: 'Bien', color: 'bg-green-500', icon: '✅' },
-  { value: 2, label: 'Safa', color: 'bg-yellow-400', icon: '😐' },
-  { value: -2, label: 'Mal', color: 'bg-red-500', icon: '❌' },
+  { value: 5, label: 'Muy bien', color: 'bg-emerald-600', icon: '🌞' }, // Muy bien: sol
+  { value: 3, label: 'Bien', color: 'bg-green-500', icon: '✅' },      // Bien: check verde
+  { value: 1, label: 'Regular', color: 'bg-yellow-400', icon: '😊' },  // Regular: carita sonriente
+  { value: -1, label: 'Mal', color: 'bg-orange-500', icon: '⚠️' },     // Mal: advertencia
+  { value: -3, label: 'Muy mal', color: 'bg-red-600', icon: '❌' },     // Muy mal: cruz roja
 ];
 
 export default function Meals({ fecha }) {
+    const user = getAuth().currentUser;
+    // Estado para el día seleccionado, inicializado con la prop fecha
+    const [selectedDay, setSelectedDay] = useState(fecha);
+    // Sincronizar selectedDay con la prop fecha si cambia desde el exterior
+    useEffect(() => {
+      setSelectedDay(fecha);
+    }, [fecha]);
+    // Log al montar el componente
+    useEffect(() => {
+      console.log('[Habitly] Meals.jsx montado. Usuario:', user?.uid, 'Día seleccionado:', selectedDay);
+    }, [user, selectedDay]);
+    // Estado para modal de edición manual
+    const [modalEditar, setModalEditar] = useState({ open: false, mealKey: '', puntuacion: 1 });
+
+    // Función para abrir el modal de edición manual
+    const handleAbrirEditar = (mealKey) => {
+      setModalEditar({ open: true, mealKey, puntuacion: meals[mealKey]?.puntuacion || 1 });
+    };
+
+    // Función para guardar la puntuación manual
+    const handleGuardarEdicion = async () => {
+        console.log('[Habitly] handleGuardarEdicion llamado', { mealKey: modalEditar.mealKey, puntuacion: modalEditar.puntuacion, selectedDay });
+      const { mealKey, puntuacion } = modalEditar;
+      const categoria = PUNTUACIONES.find(p => p.value === Number(puntuacion))?.label || 'Regular';
+      const newMeals = {
+        ...meals,
+        [mealKey]: {
+          ...meals[mealKey],
+          puntuacion: Number(puntuacion),
+          categoria,
+        },
+      };
+      setMeals(newMeals);
+      await saveDailyMeals(user.uid, selectedDay, newMeals);
+      // Recalcular y guardar puntos del mes en localStorage
+      await savePuntosMesToLocal(user.uid, selectedDay, newMeals);
+      setModalEditar({ open: false, mealKey: '', puntuacion: 1 });
+      setSuccess('Calificación actualizada manualmente.');
+    };
+// Permite override de meals del día actual para feedback inmediato
+async function savePuntosMesToLocal(uid, overrideDay, overrideMeals) {
+  const mes = dayjs(overrideDay).format('YYYY-MM');
+  // Import dinámico para evitar ciclos
+  const { getMonthlyMeals, getMonthlyHabits, getMonthlyProgressPoints, getMonthlyLogros } = await import('../../utils/puntosMes');
+  // Si hay override, pásalo a getMonthlyMeals
+  const comidas = await getMonthlyMeals(uid, mes, overrideDay, overrideMeals);
+  const habitos = await getMonthlyHabits(uid, mes);
+  const progreso = await getMonthlyProgressPoints(uid, mes);
+  const logros = await getMonthlyLogros(uid, mes);
+  const puntosMes = comidas + habitos + progreso + logros;
+  const data = { mes, puntosMes, desglose: { comidas, habitos, progreso, logros } };
+  localStorage.setItem('puntosMes', JSON.stringify(data));
+  // Log para debug
+  console.log('[Habitly] Puntos recalculados y guardados en localStorage:', data);
+}
   const [meals, setMeals] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [permitidosSemana, setPermitidosSemana] = useState(0);
-  const user = getAuth().currentUser;
   const [showWeek, setShowWeek] = useState(false);
-  const [selectedDay, setSelectedDay] = useState(fecha || dayjs().format('YYYY-MM-DD'));
   const [weekDays, setWeekDays] = useState([]);
   // Previsualización local de fotos
   const [previewFotos, setPreviewFotos] = useState({});
@@ -85,63 +139,70 @@ export default function Meals({ fecha }) {
     });
   }, [user, fecha]);
 
-  const handlePuntuacion = async (key, value) => {
-    setError('');
-    setSuccess('');
-    if (![5, 2, -2].includes(value)) {
-      setError('Puntuación inválida.');
-      return;
-    }
-    if (meals.excepcion) {
-      setError('No puedes puntuar un día permitido (excepción).');
-      return;
-    }
-    const newMeals = {
-      ...meals,
-      [key]: { ...meals[key], puntuacion: value },
-    };
-    const allPuntuadas = MEALS.every(m => newMeals[m.key]?.puntuacion !== undefined);
-    const perfectas = allPuntuadas && MEALS.every(m => newMeals[m.key]?.puntuacion === 5);
-    newMeals.bonoPerfecto = !!perfectas;
-    setMeals(newMeals);
-    await saveDailyMeals(user.uid, fecha, newMeals);
-    if (perfectas) setSuccess('¡Bonificación por comidas perfectas!');
-  };
+  // Eliminada la función handlePuntuacion (la IA asigna la puntuación)
 
+  const [modalExplicacion, setModalExplicacion] = useState({ open: false, text: '', etiqueta: '', categoria: '' });
   const handleFoto = async (key, file) => {
+      console.log('[Habitly] handleFoto llamado', { key, file, selectedDay });
     setError('');
     setSuccess('');
     if (!file) return;
-    // Previsualización instantánea
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = async e => {
       setPreviewFotos(prev => ({ ...prev, [key]: e.target.result }));
+      try {
+        const uploadResult = await uploadImageToCloudinary(file);
+        if (!uploadResult.secure_url) {
+          setError('Error Cloudinary: ' + (uploadResult.error?.message || JSON.stringify(uploadResult)));
+          return;
+        }
+        const url = uploadResult.secure_url;
+        const base64 = e.target.result.split(',')[1];
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const aiEndpoint = isLocal
+          ? 'http://localhost:4000/api/analyze-food'
+          : '/api/analyze-food';
+        const aiRes = await fetch(aiEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64 })
+        });
+        const aiData = await aiRes.json();
+        // Mapear score IA a valor
+        let puntuacion = 1;
+        if (aiData.score === 'Muy bien') puntuacion = 5;
+        else if (aiData.score === 'Bien') puntuacion = 3;
+        else if (aiData.score === 'Regular') puntuacion = 1;
+        else if (aiData.score === 'Mal') puntuacion = -1;
+        else if (aiData.score === 'Muy mal') puntuacion = -3;
+        const newMeals = {
+          ...meals,
+          [key]: {
+            ...meals[key],
+            foto: url,
+            puntuacion,
+            etiqueta: aiData.etiqueta,
+            explicacion: aiData.result?.candidates?.[0]?.content?.parts?.[0]?.text || '',
+            categoria: aiData.score
+          },
+        };
+        setMeals(newMeals);
+        setPreviewFotos(prev => ({ ...prev, [key]: undefined }));
+        await saveDailyMeals(user.uid, selectedDay, newMeals);
+        // Recalcular y guardar puntos del mes en localStorage
+        await savePuntosMesToLocal(user.uid, selectedDay, meals);
+        setSuccess('Foto y puntuación IA guardadas.');
+      } catch (e) {
+        setError('Error IA: ' + (e.message || e.toString()));
+        console.error('Error IA:', e);
+      }
     };
     reader.readAsDataURL(file);
-    try {
-      const uploadResult = await uploadImageToCloudinary(file);
-      console.log('Cloudinary meal upload result:', uploadResult);
-      if (!uploadResult.secure_url) {
-        setError('Error Cloudinary: ' + (uploadResult.error?.message || JSON.stringify(uploadResult)));
-        return;
-      }
-      const url = uploadResult.secure_url;
-      const newMeals = {
-        ...meals,
-        [key]: { ...meals[key], foto: url },
-      };
-      setMeals(newMeals);
-      setPreviewFotos(prev => ({ ...prev, [key]: undefined })); // Limpiar preview al guardar
-      await saveDailyMeals(user.uid, fecha, newMeals);
-      setSuccess('Foto subida correctamente.');
-    } catch (e) {
-      setError('Error al subir la foto: ' + (e.message || e.toString()));
-      console.error('Error al subir la foto:', e);
-    }
   };
 
   // Nuevo: permitido por comida, máximo 2 por semana
   const handlePermitido = async (mealKey) => {
+      console.log('[Habitly] handlePermitido llamado', { mealKey, selectedDay, meals });
     setError('');
     setSuccess('');
     // Si ya está marcado como permitido, desmarcarlo
@@ -152,6 +213,8 @@ export default function Meals({ fecha }) {
       // Eliminar el campo permitido en Firestore para el día seleccionado
       const ref = doc(db, 'meals', `${user.uid}_${selectedDay}`);
       await updateDoc(ref, { [`${mealKey}.permitido`]: deleteField() });
+      // Recalcular y guardar puntos del mes en localStorage
+      await savePuntosMesToLocal(user.uid, selectedDay, meals);
       setTimeout(() => {
         fetchPermitidosSemana();
       }, 250);
@@ -184,6 +247,8 @@ export default function Meals({ fecha }) {
     }
     setMeals(newMeals);
     await saveDailyMeals(user.uid, selectedDay, newMeals);
+    // Recalcular y guardar puntos del mes en localStorage
+    await savePuntosMesToLocal(user.uid, selectedDay, meals);
     setTimeout(() => {
       fetchPermitidosSemana();
     }, 250);
@@ -211,16 +276,16 @@ export default function Meals({ fecha }) {
         </div>
         {showWeek && (
           <div className="flex flex-wrap justify-center gap-2 mb-6 px-1">
-            {weekDays.map((day, idx) => {
-              const dayName = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'][dayjs(day).day()];
+            {weekDays.map((d, idx) => {
+              const dayName = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'][dayjs(d).day()];
               return (
                 <button
-                  key={day}
-                  className={`px-0.5 py-0.5 rounded-full text-[0.65rem] font-bold shadow transition-all duration-200 focus:outline-none mx-[2px] ${selectedDay === day ? 'bg-blue-500 text-white' : 'bg-gray-700 text-blue-200 hover:bg-blue-400 hover:text-white'}`}
-                  onClick={() => setSelectedDay(day)}
-                  title={day}
+                  key={d}
+                  className={`px-0.5 py-0.5 rounded-full text-[0.65rem] font-bold shadow transition-all duration-200 focus:outline-none mx-[2px] ${selectedDay === d ? 'bg-blue-500 text-white' : 'bg-gray-700 text-blue-200 hover:bg-blue-400 hover:text-white'}`}
+                  onClick={() => setSelectedDay(d)}
+                  title={d}
                 >
-                  {dayName}<br />{dayjs(day).format('DD/MM')}
+                  {dayName}<br />{dayjs(d).format('DD/MM')}
                 </button>
               );
             })}
@@ -243,30 +308,127 @@ export default function Meals({ fecha }) {
               </button>
             </div>
             {/* Calificación centrada abajo, sin opacidad, más arriba, más separados y más anchos */}
-            <div className="absolute left-1/2 bottom-11 z-20 flex gap-0 -translate-x-1/2">
-              {PUNTUACIONES.map(opt => (
-                <button
-                  key={opt.value}
-                  className={`w-32 px-0 py-1.5 text-sm rounded-full font-bold text-white shadow transition-all duration-200 focus:outline-none ${opt.color} scale-[0.7] ${meals[meal.key]?.puntuacion === opt.value ? 'ring-2 ring-white scale-105' : 'hover:scale-105'}`}
-                  onClick={() => handlePuntuacion(meal.key, opt.value)}
-                  disabled={loading || meals[meal.key]?.permitido}
-                  title={opt.label}
-                  style={{ marginRight: opt.value !== PUNTUACIONES[PUNTUACIONES.length - 1].value ? '-23px' : '0' }}
+            {/* Categoría IA asignada automáticamente */}
+            {meals[meal.key]?.puntuacion !== undefined && !meals[meal.key]?.permitido && (
+              <div className="absolute left-1/2 bottom-11 z-20 flex flex-col items-center -translate-x-1/2">
+                <span
+                  className={`px-4 py-1.5 text-base rounded-full font-bold text-white shadow scale-105 mb-1 ${PUNTUACIONES.find(o => o.value === meals[meal.key]?.puntuacion)?.color}`}
                 >
-                  <span className="text-base mr-1">{opt.icon}</span>{opt.label}
+                  {PUNTUACIONES.find(o => o.value === meals[meal.key]?.puntuacion)?.icon} {meals[meal.key]?.categoria || PUNTUACIONES.find(o => o.value === meals[meal.key]?.puntuacion)?.label}
+                </span>
+                <button
+                  className="mt-1 px-3 py-1 rounded bg-blue-600 text-white text-xs font-semibold shadow hover:bg-blue-700 transition"
+                  onClick={() => setModalExplicacion({ open: true, text: meals[meal.key]?.explicacion || '', etiqueta: meals[meal.key]?.etiqueta, categoria: meals[meal.key]?.categoria })}
+                >
+                  ¿Por qué esta puntuación?
                 </button>
-              ))}
-            </div>
+                {/* Botón para editar calificación manualmente en la esquina inferior derecha */}
+                <div style={{ position: 'absolute', right: '-72px', bottom: '-38px', zIndex: 30 }}>
+                  <button
+                    className="px-3 py-1 rounded bg-gray-500/70 text-white text-xs font-semibold shadow hover:bg-gray-600/70 transition"
+                    onClick={() => handleAbrirEditar(meal.key)}
+                    title="Editar calificación manualmente"
+                  >
+                    <span role="img" aria-label="Editar">✏️</span>
+                  </button>
+                </div>
+              </div>
+            )}
+                  {/* Modal para editar calificación manualmente */}
+                  {modalEditar.open && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                      <div className="bg-white rounded-xl shadow-lg p-6 max-w-xs w-full relative">
+                        <button className="absolute top-2 right-2 text-gray-500 hover:text-red-500 font-bold text-lg" onClick={() => setModalEditar({ open: false, mealKey: '', puntuacion: 1 })}>×</button>
+                        <h4 className="text-lg font-bold mb-4 text-yellow-700">Editar calificación</h4>
+                        <div className="mb-4">
+                          <label className="block text-gray-700 font-semibold mb-2">Selecciona la categoría:</label>
+                          <div className="flex flex-col gap-2">
+                            {PUNTUACIONES.map(p => (
+                              <label key={p.value} className={`flex items-center gap-2 p-2 rounded cursor-pointer ${modalEditar.puntuacion === p.value ? p.color + ' text-white font-bold' : 'bg-gray-100 text-gray-800'}`}>
+                                <input
+                                  type="radio"
+                                  name="puntuacion"
+                                  value={p.value}
+                                  checked={modalEditar.puntuacion === p.value}
+                                  onChange={() => setModalEditar(m => ({ ...m, puntuacion: p.value }))}
+                                  className="form-radio h-4 w-4 text-blue-600"
+                                />
+                                <span>{p.icon} {p.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <button
+                          className="w-full py-2 rounded bg-yellow-500 text-white font-bold shadow hover:bg-yellow-600 transition"
+                          onClick={handleGuardarEdicion}
+                        >
+                          Guardar calificación
+                        </button>
+                      </div>
+                    </div>
+                  )}
             {/* Estado/Puntaje debajo de la calificación */}
+            {/* Estado/Puntaje debajo de la calificación (opcional, solo puntos) */}
             {meals[meal.key]?.puntuacion !== undefined && !meals[meal.key]?.permitido && (
               <span className="absolute left-1/2 bottom-2 z-30 -translate-x-1/2 text-xs font-semibold text-blue-300 bg-black/60 px-3 py-1 rounded-full shadow">
-                Estado: {PUNTUACIONES.find(o => o.value === meals[meal.key]?.puntuacion)?.label}
                 {(() => {
                   const puntos = meals[meal.key]?.puntuacion;
-                  return typeof puntos === 'number' ? `  (+${puntos} pts)` : '';
+                  if (typeof puntos === 'number') {
+                    return `${puntos > 0 ? '+' : ''}${puntos} pts`;
+                  }
+                  return '';
                 })()}
               </span>
             )}
+                  {/* Modal de explicación IA */}
+                  {modalExplicacion.open && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                      <div className="bg-white rounded-xl shadow-lg p-6 max-w-xs w-full relative">
+                        <button className="absolute top-2 right-2 text-gray-500 hover:text-red-500 font-bold text-lg" onClick={() => setModalExplicacion({ open: false, text: '', etiqueta: '', categoria: '' })}>×</button>
+                        <h4 className="text-lg font-bold mb-2 text-blue-700">Explicación IA</h4>
+                        {(() => {
+                          // Buscar color según categoría
+                          const cat = modalExplicacion.categoria;
+                          const color = PUNTUACIONES.find(o => o.label === cat)?.color || 'bg-gray-400';
+                          const textColor = color.replace('bg-', 'text-');
+                          return (
+                            <>
+                              {modalExplicacion.etiqueta && (
+                                <div className="mb-1 text-sm text-gray-700">
+                                  <b>Comida detectada:</b> <span className={textColor}>{modalExplicacion.etiqueta}</span>
+                                </div>
+                              )}
+                              {modalExplicacion.categoria && (
+                                <div className="mb-1 text-sm text-gray-700">
+                                  <b>Categoría:</b> <span className={textColor}>{modalExplicacion.categoria}</span>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                        {(() => {
+                          // Parsear el texto IA en líneas
+                          const lines = (modalExplicacion.text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                          // Evitar repetir comida/categoría
+                          let explicacion = '';
+                          let tips = '';
+                          lines.forEach((line, idx) => {
+                            if (line.toLowerCase().startsWith('explicación:')) explicacion = line.replace(/^explicación:/i, '').trim();
+                            if (line.toLowerCase().startsWith('tips para mejorar:')) tips = line.replace(/^tips para mejorar:/i, '').trim();
+                          });
+                          // Si la IA no separó bien, intentar heurística
+                          if (!explicacion && lines[2]) explicacion = lines[2];
+                          if (!tips && lines[3]) tips = lines[3];
+                          return (
+                            <div className="text-gray-800 text-sm mt-2">
+                              <div className="mb-2"><b>Explicación:</b> {explicacion || 'No disponible.'}</div>
+                              <div><b>Tips para mejorar:</b> {tips || 'No disponible.'}</div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
             {/* Imagen de la comida ocupa el 90% de la card */}
             {(previewFotos[meal.key] || meals[meal.key]?.foto) && (
               <img
@@ -338,3 +500,4 @@ export default function Meals({ fecha }) {
     </div>
   );
 }
+

@@ -7,6 +7,17 @@ import CompanionAvatar from '../../assets/icons/CompanionAvatar.jsx';
 import '../../styles/appTitleAnimation.css';
 import ThemeToggle from './ThemeToggle';
 
+function getAvatarUrl(user) {
+  const url = user.photoURL
+    ? user.photoURL
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=0D8ABC&color=fff`;
+  if (url.includes('res.cloudinary.com')) {
+    // Insertar transformación para thumbnail cuadrado centrado en la URL de Cloudinary
+    return url.replace('/upload/', '/upload/c_thumb,g_face,w_200,h_200/');
+  }
+  return url;
+}
+
 export default function Topbar({ open, setOpen }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -70,7 +81,7 @@ export default function Topbar({ open, setOpen }) {
       <div className="w-1/4 flex justify-end items-center gap-2" style={{marginTop: '20px'}}>
         {user && (
           <img
-            src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=0D8ABC&color=fff`}
+            src={getAvatarUrl(user)}
             alt="avatar usuario"
             className="w-9 h-9 rounded-full border-2 border-blue-300 shadow-sm bg-white cursor-pointer"
             title={user.displayName || user.email}

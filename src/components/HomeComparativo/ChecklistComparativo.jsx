@@ -111,6 +111,20 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
     setChecked(newChecked);
     setError('');
     await saveDailyActivity(user.uid, today, newChecked);
+    // Recalcular y guardar puntos del mes en localStorage
+    await savePuntosMesToLocal(user.uid);
+  // Función para recalcular y guardar puntos del mes en localStorage
+  async function savePuntosMesToLocal(uid) {
+    const mes = dayjs().format('YYYY-MM');
+    // Import dinámico para evitar ciclos
+    const { getMonthlyMeals, getMonthlyHabits, getMonthlyProgressPoints, getMonthlyLogros } = await import('../../utils/puntosMes');
+    const comidas = await getMonthlyMeals(uid, mes);
+    const habitos = await getMonthlyHabits(uid, mes);
+    const progreso = await getMonthlyProgressPoints(uid, mes);
+    const logros = await getMonthlyLogros(uid, mes);
+    const puntosMes = comidas + habitos + progreso + logros;
+    localStorage.setItem('puntosMes', JSON.stringify({ mes, puntosMes, desglose: { comidas, habitos, progreso, logros } }));
+  }
 
     // --- Lógica de puntos y rachas ---
     // Obtener datos previos del usuario

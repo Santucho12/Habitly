@@ -38,11 +38,18 @@ export async function getMonthlyHabits(uid, mes) {
 }
 
 // Suma puntos de comidas del mes
-export async function getMonthlyMeals(uid, mes) {
+// Permite override de un día y comidas para feedback inmediato
+export async function getMonthlyMeals(uid, mes, overrideDay, overrideMeals) {
   let total = 0;
   const fechas = getAllDatesOfMonth(mes);
   for (const fecha of fechas) {
-    const data = await getDailyMeals(uid, fecha);
+    let data;
+    if (overrideDay && overrideMeals && fecha === overrideDay) {
+      // Usar override local para el día editado
+      data = overrideMeals;
+    } else {
+      data = await getDailyMeals(uid, fecha);
+    }
     if (data) {
       // Sumar puntos de comidas según lógica real
       const comidas = ['desayuno','almuerzo','merienda','cena'].map(key => data[key] || {});

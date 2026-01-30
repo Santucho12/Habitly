@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useAuth } from '../App';
 // import CompanionPairing from '../components/Companion/CompanionPairing';
 import { uploadProfilePhoto } from '../services/storage';
+import { uploadImageToCloudinary } from '../services/cloudinary';
 import { updateProfile } from 'firebase/auth';
 
 export default function Profile() {
@@ -23,7 +24,13 @@ export default function Profile() {
     setUploading(true);
     setError('');
     try {
-      const url = await uploadProfilePhoto(user.uid, file);
+      // Subir a Firebase Storage (opcional, puedes comentar si solo quieres Cloudinary)
+      // const firebaseUrl = await uploadProfilePhoto(user.uid, file);
+
+      // Subir a Cloudinary
+      const cloudinaryResult = await uploadImageToCloudinary(file);
+      if (!cloudinaryResult.secure_url) throw new Error('Error al subir a Cloudinary');
+      const url = cloudinaryResult.secure_url;
       await updateProfile(user, { photoURL: url });
       setPhotoURL(url);
     } catch (err) {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import PuntosMesListener from '../PuntosMesListener';
 import { useLocation } from 'react-router-dom';
 
 export default function Layout({ children }) {
@@ -20,6 +21,7 @@ export default function Layout({ children }) {
   const activityName = routeNames[location.pathname] || '';
   return (
     <div className="relative flex min-h-screen overflow-x-hidden">
+      <PuntosMesListener />
       {/* Video de fondo global */}
       <video
         autoPlay
