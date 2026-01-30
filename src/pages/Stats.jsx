@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useFechaActual } from '../context/FechaContext';
 import EmptyState from '../components/EmptyState';
 import { getMonthlyRanking } from '../services/ranking';
 import { getMonthlyHabits, getMonthlyMeals, getMonthlyProgressPoints, getMonthlyLogros } from '../utils/puntosMes';
@@ -29,12 +30,13 @@ import { db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export default function StatsPage() {
+  const { fechaActual } = useFechaActual();
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [prevPos, setPrevPos] = useState(null);
   const [puntosTotales, setPuntosTotales] = useState({ yo: 0, compa: 0 });
   const [user, setUser] = useState(null);
-  const mes = dayjs().format('YYYY-MM');
+  const mes = fechaActual.format('YYYY-MM');
   // Leer puntos y desglose de localStorage si existen
   const getLocalPuntos = () => {
     try {

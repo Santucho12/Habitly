@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { finalizeWeeklyMeals } from '../../services/finalizeWeeklyMeals';
 import { getAuth } from 'firebase/auth';
 import { getDailyMeals, saveDailyMeals } from '../../services/meals';
 import { uploadImageToCloudinary } from '../../services/cloudinary';
@@ -6,6 +7,8 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { deleteField } from 'firebase/firestore';
 import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
+dayjs.extend(isoWeek);
 
 
 const MEALS = [
@@ -25,6 +28,24 @@ const PUNTUACIONES = [
 
 export default function Meals({ fecha }) {
     const user = getAuth().currentUser;
+    // --- Borrado automático semanal ---
+    useEffect(() => {
+      if (!user) return;
+      const today = dayjs();
+      const isMonday = today.day() === 1; // 1 = lunes
+      // Guardar en localStorage la última semana borrada
+      const lastCleared = localStorage.getItem('lastMealsWeekCleared');
+      const thisWeek = today.startOf('isoWeek').format('YYYY-MM-DD');
+      if (isMonday && lastCleared !== thisWeek) {
+        // Semana anterior: lunes pasado
+        const prevWeek = today.subtract(1, 'week').startOf('isoWeek').format('YYYY-MM-DD');
+        finalizeWeeklyMeals(user.uid, prevWeek).then(points => {
+          localStorage.setItem('lastMealsWeekCleared', thisWeek);
+          // Opcional: mostrar mensaje
+          // alert(`Comidas de la semana pasada borradas. Puntos guardados: ${points}`);
+        });
+      }
+    }, [user]);
     // Estado para el día seleccionado, inicializado con la prop fecha
     const [selectedDay, setSelectedDay] = useState(fecha);
     // Sincronizar selectedDay con la prop fecha si cambia desde el exterior
@@ -91,7 +112,7 @@ async function savePuntosMesToLocal(uid, overrideDay, overrideMeals) {
 
   // Calcular días de la semana actual
   useEffect(() => {
-    const startOfWeek = dayjs(selectedDay).startOf('week');
+    const startOfWeek = dayjs(selectedDay).startOf('isoWeek');
     const days = [];
     for (let i = 0; i < 7; i++) {
       days.push(startOfWeek.add(i, 'day').format('YYYY-MM-DD'));
@@ -102,7 +123,7 @@ async function savePuntosMesToLocal(uid, overrideDay, overrideMeals) {
   // Calcular permitidos usados en la semana
   const fetchPermitidosSemana = async () => {
     if (!user) return;
-    const startOfWeek = dayjs(selectedDay).startOf('week');
+    const startOfWeek = dayjs(selectedDay).startOf('isoWeek');
     let totalPermitidos = 0;
     for (let i = 0; i < 7; i++) {
       const d = startOfWeek.add(i, 'day').format('YYYY-MM-DD');
@@ -205,16 +226,28 @@ async function savePuntosMesToLocal(uid, overrideDay, overrideMeals) {
       console.log('[Habitly] handlePermitido llamado', { mealKey, selectedDay, meals });
     setError('');
     setSuccess('');
-    // Si ya está marcado como permitido, desmarcarlo
+    // Si ya está marcado como permitido, desmarcarlo y restaurar puntuación previa si existe
     if (meals[mealKey]?.permitido) {
+      const prevPuntuacion = meals[mealKey]?.prevPuntuacion;
       const newMeals = { ...meals, [mealKey]: { ...meals[mealKey] } };
       delete newMeals[mealKey].permitido;
+      if (prevPuntuacion !== undefined) {
+        newMeals[mealKey].puntuacion = prevPuntuacion;
+        delete newMeals[mealKey].prevPuntuacion;
+      } else {
+        delete newMeals[mealKey].puntuacion;
+        delete newMeals[mealKey].prevPuntuacion;
+      }
+      // Eliminar prevPuntuacion si es undefined
+      if (newMeals[mealKey].prevPuntuacion === undefined) {
+        delete newMeals[mealKey].prevPuntuacion;
+      }
       setMeals(newMeals);
-      // Eliminar el campo permitido en Firestore para el día seleccionado
+      // Eliminar el campo permitido y prevPuntuacion en Firestore para el día seleccionado
       const ref = doc(db, 'meals', `${user.uid}_${selectedDay}`);
-      await updateDoc(ref, { [`${mealKey}.permitido`]: deleteField() });
-      // Recalcular y guardar puntos del mes en localStorage
-      await savePuntosMesToLocal(user.uid, selectedDay, meals);
+      await updateDoc(ref, { [`${mealKey}.permitido`]: deleteField(), [`${mealKey}.prevPuntuacion`]: deleteField() });
+      await saveDailyMeals(user.uid, selectedDay, newMeals);
+      await savePuntosMesToLocal(user.uid, selectedDay, newMeals);
       setTimeout(() => {
         fetchPermitidosSemana();
       }, 250);
@@ -222,7 +255,7 @@ async function savePuntosMesToLocal(uid, overrideDay, overrideMeals) {
       return;
     }
     // Contar permitidos en la semana
-    const startOfWeek = dayjs(selectedDay).startOf('week');
+    const startOfWeek = dayjs(selectedDay).startOf('isoWeek');
     let permitidosSemana = 0;
     for (let i = 0; i < 7; i++) {
       const d = startOfWeek.add(i, 'day').format('YYYY-MM-DD');
@@ -237,18 +270,26 @@ async function savePuntosMesToLocal(uid, overrideDay, overrideMeals) {
       setError('Ya usaste tus 4 permitidos esta semana.');
       return;
     }
-    // Marcar permitido en la comida (borra puntuación si la hay)
+    // Marcar permitido en la comida: puntuación 0, guardar puntuación previa
+    const prevPuntuacion = meals[mealKey]?.puntuacion;
     const newMeals = {
       ...meals,
-      [mealKey]: { ...meals[mealKey], permitido: true }
+      [mealKey]: {
+        ...meals[mealKey],
+        permitido: true,
+        puntuacion: 0
+      }
     };
-    if (newMeals[mealKey].puntuacion === undefined) {
-      delete newMeals[mealKey].puntuacion;
+    if (prevPuntuacion !== undefined) {
+      newMeals[mealKey].prevPuntuacion = prevPuntuacion;
+    }
+    // Eliminar prevPuntuacion si es undefined
+    if (newMeals[mealKey].prevPuntuacion === undefined) {
+      delete newMeals[mealKey].prevPuntuacion;
     }
     setMeals(newMeals);
     await saveDailyMeals(user.uid, selectedDay, newMeals);
-    // Recalcular y guardar puntos del mes en localStorage
-    await savePuntosMesToLocal(user.uid, selectedDay, meals);
+    await savePuntosMesToLocal(user.uid, selectedDay, newMeals);
     setTimeout(() => {
       fetchPermitidosSemana();
     }, 250);
@@ -277,7 +318,9 @@ async function savePuntosMesToLocal(uid, overrideDay, overrideMeals) {
         {showWeek && (
           <div className="flex flex-wrap justify-center gap-2 mb-6 px-1">
             {weekDays.map((d, idx) => {
-              const dayName = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'][dayjs(d).day()];
+              const jsDay = dayjs(d).day();
+              const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+              const dayName = dayNames[jsDay];
               return (
                 <button
                   key={d}

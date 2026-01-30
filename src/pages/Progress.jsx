@@ -8,10 +8,13 @@ import { uploadImageToCloudinary } from '../services/cloudinary';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
 
+import { useFechaActual } from '../context/FechaContext';
+
 
 export default function ProgressPage() {
   const user = getAuth().currentUser;
-  const mes = dayjs().format('YYYY-MM');
+  const { fechaActual } = useFechaActual();
+  const mes = fechaActual.format('YYYY-MM');
   const [peso, setPeso] = useState('');
   const [foto, setFoto] = useState(null);
   const [fotoUrl, setFotoUrl] = useState('');
@@ -80,13 +83,26 @@ export default function ProgressPage() {
   return (
     <>
       {showBanner && <AchievementBanner message="¡Progreso mensual registrado!" onClose={() => setShowBanner(false)} />}
-      <div className="w-full max-w-md mx-auto bg-gray-800 rounded-2xl shadow-lg p-2 sm:p-6 mt-4 sm:mt-8" role="form" aria-labelledby="progress-title">
+      <div 
+        className="w-full mx-auto bg-gray-800 rounded-2xl shadow-lg p-2 sm:p-6 mt-4 sm:mt-8"
+        role="form"
+        aria-labelledby="progress-title"
+        style={{
+          width: '100vw',
+          maxWidth: '100vw',
+          boxSizing: 'border-box',
+          overflowX: 'hidden',
+          marginLeft: '-16px',
+          transform: 'scale(0.9)',
+          transformOrigin: 'top center',
+        }}
+      >
         <h2 id="progress-title" className="text-2xl font-bold text-blue-300 mb-2 text-center">Progreso mensual</h2>
         <div className="text-center text-blue-200 font-bold mb-4 text-lg">
           Mes actual: {dayjs(mes).locale('es').format('MMMM YYYY')}
         </div>
         {/* Carrusel de fotos y pesos históricos: ÚNICA visualización de fotos de progreso */}
-        {!previewFoto && <ProgressPhotoCompare />}
+        {!previewFoto && <div style={{width: '100%', maxWidth: '100vw', boxSizing: 'border-box', margin: '0 auto'}}><ProgressPhotoCompare /></div>}
         {/* Mensaje si no hay registro este mes */}
         {!yaRegistrado && (
           <div className="text-gray-400 text-center mt-8">

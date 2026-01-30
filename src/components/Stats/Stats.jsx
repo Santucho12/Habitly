@@ -68,7 +68,29 @@ export default function Stats({ month, year }) {
           <div className="text-sm text-gray-400">Marca actividades para ver tu progreso aquí.</div>
         </div>
       ) : (
-        <Bar data={chartData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+        <div className="overflow-x-auto">
+          <div className="min-w-[400px] max-w-full">
+            <Bar
+              data={chartData}
+              options={{
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: {
+                    ticks: {
+                      maxRotation: 0,
+                      minRotation: 0,
+                      callback: function(value, index, values) {
+                        // Show full label horizontally
+                        return this.getLabelForValue(value);
+                      },
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

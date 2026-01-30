@@ -79,12 +79,20 @@ export default function ProgressChart() {
   });
 
   return (
-    <div className="bg-gray-800 rounded-xl p-4 mb-6">
+    <div className="bg-gray-800 rounded-xl p-4 mb-6 w-full max-w-full" style={{ boxSizing: 'border-box' }}>
       <h3 className="text-lg font-bold mb-2">Evolución de peso</h3>
-      <div style={{ overflowX: 'auto', width: '100%' }}>
-        <div style={{ minWidth: Math.max(500, chartLabels.length * 90) }}>
-          <Line 
-            data={chartData} 
+      <div style={{ overflowX: 'auto', width: '100%', maxWidth: '100vw', boxSizing: 'border-box' }}>
+        <div
+          style={{
+            minWidth: chartLabels.length > 5 ? `${chartLabels.length * 90}px` : '100%',
+            maxWidth: '100vw',
+            width: '100%',
+            margin: '0 auto',
+            boxSizing: 'border-box',
+          }}
+        >
+          <Line
+            data={chartData}
             options={{
               responsive: true,
               maintainAspectRatio: false,
@@ -92,7 +100,7 @@ export default function ProgressChart() {
               scales: {
                 x: {
                   ticks: {
-                    callback: function(value, index, values) {
+                    callback: function (value, index, values) {
                       // Mostrar las etiquetas en vertical
                       return this.getLabelForValue(value).replace(' ', '\n');
                     },

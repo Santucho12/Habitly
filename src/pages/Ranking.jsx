@@ -3,6 +3,7 @@ import EmptyState from '../components/EmptyState';
 import { getMonthlyRanking } from '../services/ranking';
 import { getAuth } from 'firebase/auth';
 import dayjs from 'dayjs';
+import { useFechaActual } from '../context/FechaContext';
 
 function Ranking() {
 
@@ -11,7 +12,8 @@ function Ranking() {
   const [loading, setLoading] = useState(true);
   const [prevPos, setPrevPos] = useState(null);
   const user = getAuth().currentUser;
-  const mes = dayjs().format('YYYY-MM');
+  const { fechaActual } = useFechaActual();
+  const mes = fechaActual.format('YYYY-MM');
   const animRowRef = useRef(null);
 
   useEffect(() => {

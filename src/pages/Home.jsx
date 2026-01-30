@@ -1,5 +1,7 @@
+
 import { useMemo } from 'react';
 import HomeSummary from '../components/Home/HomeSummary';
+import { useFechaActual } from '../context/FechaContext';
 
 const mensajes = [
   '¡Hoy es un gran día para mejorar tus hábitos! 💪',
@@ -15,14 +17,15 @@ const mensajes = [
 ];
 
 export default function Home() {
+  const { fechaActual } = useFechaActual();
   // Mensaje motivacional diario (cambia cada día)
   const mensaje = useMemo(() => {
-    const day = new Date().toISOString().slice(0, 10);
+    const day = fechaActual.format('YYYY-MM-DD');
     // Hash simple para elegir mensaje según el día
     let sum = 0;
     for (let i = 0; i < day.length; i++) sum += day.charCodeAt(i);
     return mensajes[sum % mensajes.length];
-  }, []);
+  }, [fechaActual]);
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] fade-in">
       <HomeSummary />

@@ -1,13 +1,27 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+
 function Modal({ open, onClose, children }) {
   if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70" onClick={onClose}>
-      <div className="bg-gray-900 rounded-xl p-4 shadow-xl relative max-w-2xl w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.96)' }} onClick={onClose}>
+      <div
+        className="bg-gray-900 rounded-2xl shadow-2xl relative flex flex-col items-center"
+        style={{
+          padding: '1.2rem',
+          maxWidth: '95vw',
+          maxHeight: '90vh',
+          minWidth: 0,
+          minHeight: 0,
+          boxSizing: 'border-box',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
         <button className="absolute top-2 right-2 text-white text-2xl" onClick={onClose}>&times;</button>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 import { getAuth } from 'firebase/auth';
@@ -88,19 +102,21 @@ export default function ProgressPhotoCompare() {
                     <div className="flex items-center justify-center gap-4">
                       <button
                         onClick={() => setModalIndex(i => (i - 1 + months.length) % months.length)}
-                        className="px-3 py-2 bg-gray-700 rounded text-white text-2xl"
+                        className="flex items-center justify-center w-10 h-10 bg-blue-700 bg-opacity-80 hover:bg-blue-800 rounded-full text-white text-2xl font-bold shadow-lg mx-2 z-10"
                         aria-label="Anterior"
+                        style={{ alignSelf: 'center' }}
                       >◀</button>
                       <img
                         src={progress.find(p => p.mes === months[modalIndex])?.foto}
                         alt={`Foto ${months[modalIndex]}`}
-                        className="max-w-[70vw] max-h-[70vh] object-contain rounded-xl border-2 border-blue-400 bg-black"
-                        style={{ minWidth: 200, minHeight: 200 }}
+                        className="object-contain rounded-xl border-2 border-blue-400 bg-black"
+                        style={{ maxWidth: '70vw', maxHeight: '70vh', minWidth: 120, minHeight: 120 }}
                       />
                       <button
                         onClick={() => setModalIndex(i => (i + 1) % months.length)}
-                        className="px-3 py-2 bg-gray-700 rounded text-white text-2xl"
+                        className="flex items-center justify-center w-10 h-10 bg-blue-700 bg-opacity-80 hover:bg-blue-800 rounded-full text-white text-2xl font-bold shadow-lg mx-2 z-10"
                         aria-label="Siguiente"
+                        style={{ alignSelf: 'center' }}
                       >▶</button>
                     </div>
                     <div className="text-center text-lg mt-2 font-bold text-blue-300">

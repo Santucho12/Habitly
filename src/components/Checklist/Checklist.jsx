@@ -5,6 +5,7 @@ import { saveDailyActivity, getDailyActivity } from '../../services/habits';
 import { calcularPuntosDia } from '../../utils/points';
 import { actualizarRacha } from '../../utils/streaks';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 // import { savePuntosMesToLocalAndFirestore } from '../../utils/savePuntosMesToLocalAndFirestore';
 import dayjs from 'dayjs';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
@@ -16,14 +17,14 @@ const ACTIVITIES = [
   { key: 'caminar', label: 'Caminar', points: 8 },
 ];
 
-export default function Checklist({ showAddHabitForm = true }) {
+export default function Checklist({ showAddHabitForm = true, fecha }) {
   const { user } = useAuth();
   const [habits, setHabits] = useState([]);
   const [checked, setChecked] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const today = dayjs().format('YYYY-MM-DD');
-  const weekNumber = dayjs().week();
+  const today = fecha || dayjs().format('YYYY-MM-DD');
+  const weekNumber = dayjs(today).week();
   const [weekActivities, setWeekActivities] = useState([]); // [{date, gym, correr, caminar}]
   const [monthActivities, setMonthActivities] = useState([]); // [{date, gym, correr, caminar}]
   const [showMonth, setShowMonth] = useState(false);
@@ -226,55 +227,82 @@ export default function Checklist({ showAddHabitForm = true }) {
         <div className={`flex flex-col items-center mb-6`} style={showMonth ? {maxWidth: '370px'} : {}}>
           {showMonth
             ? (() => {
-                // ...existing code for month view...
-                const weeks = [];
-                for (let i = 0; i < monthActivities.length; i += 7) {
-                  weeks.push(monthActivities.slice(i, i + 7));
+                // Cabecera fija de días (L M M J V S D)
+                const weekDays = ['L','M','M','J','V','S','D'];
+                const daysInMonth = dayjs(today).daysInMonth();
+                const firstDay = dayjs(today).startOf('month');
+                // Offset para semana que inicia en lunes: (firstDay.day() + 6) % 7
+                const offset = (firstDay.day() + 6) % 7;
+                const cells = [];
+                for (let i = 0; i < offset; i++) {
+                  cells.push(null); // vacíos antes del 1
                 }
-                return weeks.map((week, wi) => (
-                  <div key={wi} className="flex flex-row justify-center gap-1 sm:gap-2 mb-2 w-full overflow-x-auto">
-                    {/* ...existing code for each day in month view... */}
-                    {week.map((act, i) => {
-                      // ...existing code...
-                      const weekDayLetter = ['L','M','M','J','V','S','D'][dayjs(act.date).day()];
-                      const colors = [];
-                      if (act.gym) colors.push('#22c55e');
-                      if (act.correr) colors.push('#3b82f6');
-                      if (act.caminar) colors.push('#67e8f9');
-                      let customBg = {};
-                      let label = '';
-                      if (colors.length === 0) {
-                        customBg = { backgroundColor: '#181e2a' };
-                      } else if (colors.length === 1) {
-                        customBg = { backgroundColor: colors[0] };
-                        label = act.gym ? 'G' : act.correr ? 'R' : 'C';
-                      } else {
-                        const percent = 100 / colors.length;
-                        let gradient = 'conic-gradient(';
-                        colors.forEach((c, idx) => {
-                          const start = percent * idx;
-                          const end = percent * (idx + 1);
-                          gradient += `${c} ${start}%, ${c} ${end}%, `;
-                        });
-                        gradient = gradient.slice(0, -2) + ')';
-                        customBg = { background: gradient };
-                        label = '';
-                      }
-                      return (
-                        <div key={i + wi * 7} className="flex flex-col items-center w-10 group">
-                          <span className="text-xs text-white mb-1 font-bold drop-shadow">{weekDayLetter}</span>
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-white shadow-lg border-2 border-white group-hover:scale-110 transition-transform duration-200`}
-                            style={customBg}
-                            title={colors.length === 0 ? 'Sin actividades' : colors.length === 1 ? (act.gym ? 'Gimnasio' : act.correr ? 'Correr' : 'Caminar') : 'Múltiples actividades'}
-                          >
-                            {label}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ));
+                for (let i = 0; i < daysInMonth; i++) {
+                  cells.push(monthActivities[i]);
+                }
+                while (cells.length % 7 !== 0) {
+                  cells.push(null); // vacíos al final
+                }
+                const rows = Math.ceil(cells.length / 7);
+                return (
+                  <>
+                    <div className="flex flex-row justify-center gap-1 sm:gap-2 mb-2 w-full">
+                      {weekDays.map((wd, i) => (
+                        <span key={i} className="text-xs text-blue-200 font-bold w-10 text-center">{wd}</span>
+                      ))}
+                    </div>
+                    {Array.from({ length: rows }).map((_, wi) => (
+                      <div key={wi} className="flex flex-row justify-center gap-1 sm:gap-2 mb-2 w-full overflow-x-auto">
+                        {cells.slice(wi * 7, wi * 7 + 7).map((act, i) => {
+                          if (!act) {
+                            return (
+                              <div key={i + wi * 7} className="flex flex-col items-center w-10 group">
+                                <span className="text-xs text-white mb-1 font-bold drop-shadow">&nbsp;</span>
+                                <div className="w-10 h-10 rounded-full border-2 border-transparent" style={{ backgroundColor: 'transparent' }}></div>
+                              </div>
+                            );
+                          }
+                          const weekDayLetter = weekDays[dayjs(act.date).day() === 0 ? 6 : dayjs(act.date).day() - 1];
+                          const colors = [];
+                          if (act.gym) colors.push('#22c55e');
+                          if (act.correr) colors.push('#3b82f6');
+                          if (act.caminar) colors.push('#67e8f9');
+                          let customBg = {};
+                          let label = '';
+                          if (colors.length === 0) {
+                            customBg = { backgroundColor: '#181e2a' };
+                          } else if (colors.length === 1) {
+                            customBg = { backgroundColor: colors[0] };
+                            label = act.gym ? 'G' : act.correr ? 'R' : 'C';
+                          } else {
+                            const percent = 100 / colors.length;
+                            let gradient = 'conic-gradient(';
+                            colors.forEach((c, idx) => {
+                              const start = percent * idx;
+                              const end = percent * (idx + 1);
+                              gradient += `${c} ${start}%, ${c} ${end}%, `;
+                            });
+                            gradient = gradient.slice(0, -2) + ')';
+                            customBg = { background: gradient };
+                            label = '';
+                          }
+                          return (
+                            <div key={i + wi * 7} className="flex flex-col items-center w-10 group">
+                              <span className="text-xs text-white mb-1 font-bold drop-shadow">{weekDayLetter}</span>
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-white shadow-lg border-2 border-white group-hover:scale-110 transition-transform duration-200`}
+                                style={customBg}
+                                title={colors.length === 0 ? 'Sin actividades' : colors.length === 1 ? (act.gym ? 'Gimnasio' : act.correr ? 'Correr' : 'Caminar') : 'Múltiples actividades'}
+                              >
+                                {label}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </>
+                );
               })()
             : (
                 <div className="flex flex-row justify-center gap-2 sm:gap-4">
@@ -361,7 +389,6 @@ export default function Checklist({ showAddHabitForm = true }) {
             e.preventDefault();
             setAddHabitError('');
             setAddHabitSuccess('');
-            // Ya no se requiere nombre
             if (!user) {
               setAddHabitError('Usuario no autenticado.');
               return;
@@ -374,15 +401,20 @@ export default function Checklist({ showAddHabitForm = true }) {
                 meta: Number(newHabitMeta) || 1,
                 createdAt: new Date().toISOString(),
               };
+              // Si ya existe, actualiza el hábito anterior
               await setDoc(doc(db, 'habits', `${user.uid}_${newHabitType}`), habitObj, { merge: true });
-              setAddHabitSuccess('¡Hábito agregado!');
+              setAddHabitSuccess('¡Hábito guardado!');
               setNewHabitName('');
               setNewHabitType('gym');
               setNewHabitMeta(1);
               const habitsData = await getHabitsByUser(user.uid);
               setHabits(habitsData);
             } catch (err) {
-              setAddHabitError('Error al guardar el hábito.');
+              let msg = 'Error al guardar el hábito.';
+              if (err && err.message) {
+                msg += `\n${err.message}`;
+              }
+              setAddHabitError(msg);
             }
           }}
         >

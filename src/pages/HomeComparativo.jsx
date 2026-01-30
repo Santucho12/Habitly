@@ -9,6 +9,7 @@ import { db } from '../../services/firebase';
 import dayjs from 'dayjs';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
 dayjs.extend(weekOfYear);
+import { useFechaActual } from '../context/FechaContext';
 
 const ACTIVITIES = [
   { key: 'gym', label: 'Gimnasio', points: 10 },
@@ -16,14 +17,14 @@ const ACTIVITIES = [
   { key: 'caminar', label: 'Caminar', points: 8 },
 ];
 
-export default function Checklist({ showAddHabitForm = true }) {
   const { user } = useAuth();
+  const { fechaActual } = useFechaActual();
   const [habits, setHabits] = useState([]);
   const [checked, setChecked] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const today = dayjs().format('YYYY-MM-DD');
-  const weekNumber = dayjs().week();
+  const today = fechaActual.format('YYYY-MM-DD');
+  const weekNumber = fechaActual.week();
   const [weekActivities, setWeekActivities] = useState([]); // [{date, gym, correr, caminar}]
   const [monthActivities, setMonthActivities] = useState([]); // [{date, gym, correr, caminar}]
   const [showMonth, setShowMonth] = useState(false);
@@ -42,7 +43,7 @@ export default function Checklist({ showAddHabitForm = true }) {
       const todayData = await getDailyActivity(user.uid, today);
       setChecked(todayData || {});
       // Semana
-      const weekStart = dayjs().startOf('week');
+      const weekStart = fechaActual.startOf('week');
       let weekArr = [];
       for (let i = 0; i < 7; i++) {
         const d = weekStart.add(i, 'day').format('YYYY-MM-DD');
@@ -57,8 +58,8 @@ export default function Checklist({ showAddHabitForm = true }) {
       }
       setWeekActivities(weekArr);
       // Mes
-      const monthStart = dayjs().startOf('month');
-      const daysInMonth = dayjs().daysInMonth();
+      const monthStart = fechaActual.startOf('month');
+      const daysInMonth = fechaActual.daysInMonth();
       let monthArr = [];
       for (let i = 0; i < daysInMonth; i++) {
         const d = monthStart.add(i, 'day').format('YYYY-MM-DD');
@@ -80,7 +81,7 @@ export default function Checklist({ showAddHabitForm = true }) {
   const handleCheck = async (key) => {
     if (checked[key]) return; // No desmarcar
     // Solo se puede marcar el día actual
-    if (dayjs().format('YYYY-MM-DD') !== today) {
+    if (fechaActual.format('YYYY-MM-DD') !== today) {
       setError('Solo puedes marcar actividades del día actual.');
       return;
     }
@@ -91,7 +92,7 @@ export default function Checklist({ showAddHabitForm = true }) {
       return;
     }
     // Buscar cuántas veces ya marcó esta actividad en la semana
-    const weekStart = dayjs().startOf('week');
+    const weekStart = fechaActual.startOf('week');
     let count = 0;
     for (let i = 0; i < 7; i++) {
       const d = weekStart.add(i, 'day').format('YYYY-MM-DD');
@@ -197,16 +198,36 @@ export default function Checklist({ showAddHabitForm = true }) {
         <div className={`flex flex-col items-center mb-6`} style={showMonth ? {maxWidth: '370px'} : {}}>
           {showMonth
             ? (() => {
-                // ...existing code for month view...
-                const weeks = [];
-                for (let i = 0; i < monthActivities.length; i += 7) {
-                  weeks.push(monthActivities.slice(i, i + 7));
+                // Generar estructura de calendario real
+                const firstDay = fechaActual.startOf('month');
+                const firstDayOfWeek = firstDay.day(); // 0=domingo, 1=lunes...
+                const daysInMonth = fechaActual.daysInMonth();
+                // Ajustar para que la semana empiece en lunes (opcional, si tu app es así)
+                const offset = (firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1); // 0=lunes, 6=domingo
+                const totalCells = offset + daysInMonth;
+                const rows = Math.ceil(totalCells / 7);
+                const cells = [];
+                for (let i = 0; i < offset; i++) {
+                  cells.push(null); // días vacíos antes del 1
                 }
-                return weeks.map((week, wi) => (
+                for (let i = 0; i < daysInMonth; i++) {
+                  cells.push(monthActivities[i]);
+                }
+                while (cells.length % 7 !== 0) {
+                  cells.push(null); // días vacíos al final
+                }
+                // Renderizar filas
+                return Array.from({ length: rows }).map((_, wi) => (
                   <div key={wi} className="flex flex-row justify-center gap-1 sm:gap-2 mb-2 w-full overflow-x-auto">
-                    {/* ...existing code for each day in month view... */}
-                    {week.map((act, i) => {
-                      // ...existing code...
+                    {cells.slice(wi * 7, wi * 7 + 7).map((act, i) => {
+                      if (!act) {
+                        return (
+                          <div key={i + wi * 7} className="flex flex-col items-center w-10 group">
+                            <span className="text-xs text-white mb-1 font-bold drop-shadow">&nbsp;</span>
+                            <div className="w-10 h-10 rounded-full border-2 border-transparent" style={{ backgroundColor: 'transparent' }}></div>
+                          </div>
+                        );
+                      }
                       const weekDayLetter = ['L','M','M','J','V','S','D'][dayjs(act.date).day()];
                       const colors = [];
                       if (act.gym) colors.push('#22c55e');
@@ -251,7 +272,7 @@ export default function Checklist({ showAddHabitForm = true }) {
                 <div className="flex flex-row justify-center gap-2 sm:gap-4">
                   {/* Semana horizontal: cada día de izquierda a derecha */}
                   {[...Array(7)].map((_, i) => {
-                    const day = dayjs().startOf('week').add(i, 'day');
+                    const day = fechaActual.startOf('week').add(i, 'day');
                     const weekDay = ['L','M','M','J','V','S','D'][i];
                     const act = weekActivities[i] || {};
                     const colors = [];

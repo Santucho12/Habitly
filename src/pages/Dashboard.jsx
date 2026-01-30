@@ -16,9 +16,9 @@ import ProgressChart from '../components/Progress/ProgressChart';
 import ProgressPhotoCompare from '../components/Progress/ProgressPhotoCompare';
 import dayjs from 'dayjs';
 
-
 export default function Dashboard() {
   const { user } = useAuth();
+  const { fechaActual } = useFechaActual();
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
@@ -30,8 +30,6 @@ export default function Dashboard() {
   const [formError, setFormError] = useState('');
   const [companionChecked, setCompanionChecked] = useState(false);
   const [hasComp, setHasComp] = useState(false);
-
-  // Eliminado weekDays, ya no se usa
 
   useEffect(() => {
     if (user) {
@@ -68,7 +66,7 @@ export default function Dashboard() {
         type: form.type,
         cantidadDias: form.cantidadDias,
         owner: user.uid,
-        createdAt: new Date(),
+        createdAt: fechaActual.toDate(),
       });
       setForm({ name: '', type: 'correr', cantidadDias: 1 });
       // Refrescar hábitos
@@ -105,14 +103,14 @@ export default function Dashboard() {
         )}
         {/* Check-list diaria de actividades */}
         <Checklist />
-        <Meals fecha={dayjs().format('YYYY-MM-DD')} />
-        <MealsRacha month={dayjs().format('MM')} year={dayjs().format('YYYY')} />
-        <ProgressForm mes={dayjs().format('YYYY-MM')} />
+        <Meals fecha={fechaActual.format('YYYY-MM-DD')} />
+        <MealsRacha month={fechaActual.format('MM')} year={fechaActual.format('YYYY')} />
+        <ProgressForm mes={fechaActual.format('YYYY-MM')} />
         <ProgressChart />
         <ProgressPhotoCompare />
         {/* Visualización de calendario y estadísticas */}
-        <Calendar month={dayjs().format('MM')} year={dayjs().format('YYYY')} />
-        <Stats month={dayjs().format('MM')} year={dayjs().format('YYYY')} />
+        <Calendar month={fechaActual.format('MM')} year={fechaActual.format('YYYY')} />
+        <Stats month={fechaActual.format('MM')} year={fechaActual.format('YYYY')} />
         <StreaksAndPoints />
         <RankingMes />
         <ComparacionCompanero />
