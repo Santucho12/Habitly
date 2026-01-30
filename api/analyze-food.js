@@ -11,31 +11,49 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing imageBase64' });
   }
 
-  const HF_TOKEN = process.env.HF_TOKEN;
-  if (!HF_TOKEN) {
-    return res.status(500).json({ error: 'Missing Hugging Face token' });
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) {
+    return res.status(500).json({ error: 'Missing Gemini API key' });
   }
 
   try {
-    const response = await fetch('https://api-inference.huggingface.co/models/akhaliq/nutrify', {
+    // Gemini espera imágenes en base64 sin el prefijo data:image/xxx;base64,
+    const base64Clean = imageBase64.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const payload = {
+      contents: [
+        {
+          parts: [
+            { inline_data: { mime_type: 'image/jpeg', data: base64Clean } },
+            { text: 'Clasifica la comida y asigna una puntuación: Muy bien, Bien, Regular, Mal, Muy mal. Devuelve también una etiqueta y una breve explicación.' }
+          ]
+        }
+      ]
+    };
+    const response = await fetch(geminiUrl, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${HF_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ inputs: imageBase64 })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
     const result = await response.json();
-    // result es un array de etiquetas con scores
-    // Ejemplo de mapeo simple
-    let score = 'Safa';
-    if (Array.isArray(result)) {
-      const labels = result.map(r => r.label.toLowerCase());
-      if (labels.some(l => ['salad', 'vegetable', 'fruit', 'chicken', 'fish', 'healthy'].includes(l))) score = 'Bien';
-      if (labels.some(l => ['cake', 'burger', 'pizza', 'fries', 'dessert', 'soda', 'fast food'].includes(l))) score = 'Mal';
+    // Procesar respuesta Gemini
+    let score = 'Regular';
+    let etiqueta = '';
+    let explicacion = '';
+    if (result && result.candidates && result.candidates[0] && result.candidates[0].content && result.candidates[0].content.parts) {
+      const text = result.candidates[0].content.parts[0].text || '';
+      // Extraer datos del texto (puedes mejorar el parsing según el formato de Gemini)
+      if (/muy bien/i.test(text)) score = 'Muy bien';
+      else if (/bien/i.test(text)) score = 'Bien';
+      else if (/regular/i.test(text)) score = 'Regular';
+      else if (/mal/i.test(text)) score = 'Mal';
+      else if (/muy mal/i.test(text)) score = 'Muy mal';
+      // Etiqueta y explicación (puedes ajustar el parsing)
+      etiqueta = (text.match(/Etiqueta: (.*)/i) || [])[1] || '';
+      explicacion = text;
     }
-    res.status(200).json({ result, score });
+    res.status(200).json({ result, score, etiqueta, explicacion });
   } catch (err) {
-    res.status(500).json({ error: 'Hugging Face API error', details: err.message });
+    res.status(500).json({ error: 'Gemini API error', details: err.message });
   }
 }
