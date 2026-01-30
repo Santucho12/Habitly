@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import { getDailyMeals, saveDailyMeals, uploadMealPhoto } from '../../services/meals';
+import { getDailyMeals, saveDailyMeals } from '../../services/meals';
+import { uploadImageToCloudinary } from '../../services/cloudinary';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { deleteField } from 'firebase/firestore';
@@ -118,7 +119,13 @@ export default function Meals({ fecha }) {
     };
     reader.readAsDataURL(file);
     try {
-      const url = await uploadMealPhoto(user.uid, fecha, key, file);
+      const uploadResult = await uploadImageToCloudinary(file);
+      console.log('Cloudinary meal upload result:', uploadResult);
+      if (!uploadResult.secure_url) {
+        setError('Error Cloudinary: ' + (uploadResult.error?.message || JSON.stringify(uploadResult)));
+        return;
+      }
+      const url = uploadResult.secure_url;
       const newMeals = {
         ...meals,
         [key]: { ...meals[key], foto: url },
@@ -128,7 +135,8 @@ export default function Meals({ fecha }) {
       await saveDailyMeals(user.uid, fecha, newMeals);
       setSuccess('Foto subida correctamente.');
     } catch (e) {
-      setError('Error al subir la foto.');
+      setError('Error al subir la foto: ' + (e.message || e.toString()));
+      console.error('Error al subir la foto:', e);
     }
   };
 

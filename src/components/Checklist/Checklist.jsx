@@ -356,10 +356,7 @@ export default function Checklist({ showAddHabitForm = true }) {
             e.preventDefault();
             setAddHabitError('');
             setAddHabitSuccess('');
-            if (!newHabitName.trim()) {
-              setAddHabitError('El nombre es obligatorio.');
-              return;
-            }
+            // Ya no se requiere nombre
             if (!user) {
               setAddHabitError('Usuario no autenticado.');
               return;
@@ -367,7 +364,7 @@ export default function Checklist({ showAddHabitForm = true }) {
             try {
               const habitObj = {
                 owner: user.uid,
-                name: newHabitName.trim(),
+                name: newHabitName.trim() || newHabitType,
                 type: newHabitType,
                 meta: Number(newHabitMeta) || 1,
                 createdAt: new Date().toISOString(),

@@ -4,7 +4,7 @@ import ProgressChart from '../components/Progress/ProgressChart';
 import ProgressPhotoCompare from '../components/Progress/ProgressPhotoCompare';
 import { getAuth } from 'firebase/auth';
 import { saveMonthlyProgress, getMonthlyProgress } from '../services/progress';
-import { uploadMealPhoto } from '../services/storage';
+import { uploadImageToCloudinary } from '../services/cloudinary';
 import dayjs from 'dayjs';
 
 
@@ -56,14 +56,21 @@ export default function ProgressPage() {
     }
     setLoading(true);
     try {
-      const url = await uploadMealPhoto(user.uid, mes, 'progreso', foto);
+      const uploadResult = await uploadImageToCloudinary(foto);
+      console.log('Cloudinary upload result:', uploadResult);
+      if (!uploadResult.secure_url) {
+        setError('Error Cloudinary: ' + (uploadResult.error?.message || JSON.stringify(uploadResult)));
+        return;
+      }
+      const url = uploadResult.secure_url;
       await saveMonthlyProgress(user.uid, mes, { peso: Number(peso), foto: url });
       setSuccess('¡Progreso registrado!');
       setYaRegistrado(true);
       setFotoUrl(url);
       setShowBanner(true);
     } catch (e) {
-      setError('Error al guardar el progreso.');
+      setError('Error al guardar el progreso: ' + (e.message || e.toString()));
+      console.error('Error al guardar el progreso:', e);
     } finally {
       setLoading(false);
     }

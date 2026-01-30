@@ -1,72 +1,51 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import EmptyState from '../components/EmptyState';
 import { getMonthlyRanking } from '../services/ranking';
 import { getMonthlyHabits, getMonthlyMeals, getMonthlyProgressPoints, getMonthlyLogros } from '../utils/puntosMes';
 import { getAllUsers } from '../services/users';
-import { getAuth } from 'firebase/auth';
 import dayjs from 'dayjs';
+import 'dayjs/locale/es';
+import { getAuth } from 'firebase/auth';
+import { db } from '../services/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function StatsPage() {
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [prevPos, setPrevPos] = useState(null);
   const [puntosTotales, setPuntosTotales] = useState({ yo: 0, compa: 0 });
-  const user = getAuth().currentUser;
+  const [user, setUser] = useState(null);
   const mes = dayjs().format('YYYY-MM');
-  const animRowRef = useRef(null);
 
   useEffect(() => {
-    getMonthlyRanking(mes).then(data => {
-      const usuarios = data?.usuarios || [];
-      const myUser = usuarios.find(u => u.userId === user?.uid);
-      if (myUser && prevPos !== null && myUser.posicion < prevPos) {
-        // Subió de posición
-        if (animRowRef.current) {
-          animRowRef.current.classList.add('animate-ranking-up');
-          setTimeout(() => {
-            if (animRowRef.current) animRowRef.current.classList.remove('animate-ranking-up');
-          }, 1200);
+    // Get current user from Firebase Auth
+    const auth = getAuth();
+    setUser(auth.currentUser);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    async function fetchPuntosMes() {
+      // Leer puntosMes de Firestore para usuario y compañero
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      let puntosYo = 0, puntosCompa = 0;
+      let compaId = null;
+      if (userSnap.exists()) {
+        puntosYo = userSnap.data().puntosMes || 0;
+        compaId = userSnap.data().companeroId;
+      }
+      if (compaId) {
+        const compaRef = doc(db, 'users', compaId);
+        const compaSnap = await getDoc(compaRef);
+        if (compaSnap.exists()) {
+          puntosCompa = compaSnap.data().puntosMes || 0;
         }
       }
-      setPrevPos(myUser?.posicion || null);
-      setRanking(usuarios);
-      setLoading(false);
-    });
-
-    // Calcular suma real de puntos para el usuario y su compañero
-    async function calcularPuntos() {
-      if (!user) return;
-      // Suma para el usuario actual
-      const [habitos, comidas, progreso, logros] = await Promise.all([
-        getMonthlyHabits(user.uid, mes),
-        getMonthlyMeals(user.uid, mes),
-        getMonthlyProgressPoints(user.uid, mes),
-        getMonthlyLogros(user.uid, mes)
-      ]);
-      let compaId = null;
-      // Buscar el id del compañero (el primer usuario distinto al actual)
-      const allUsers = await getAllUsers();
-      const compaUser = allUsers.find(u => u.uid !== user.uid);
-      if (compaUser) {
-        compaId = compaUser.uid;
-      }
-      let compaHab = 0, compaCom = 0, compaProg = 0, compaLog = 0;
-      if (compaId) {
-        [compaHab, compaCom, compaProg, compaLog] = await Promise.all([
-          getMonthlyHabits(compaId, mes),
-          getMonthlyMeals(compaId, mes),
-          getMonthlyProgressPoints(compaId, mes),
-          getMonthlyLogros(compaId, mes)
-        ]);
-      }
-      setPuntosTotales({
-        yo: habitos + comidas + progreso + logros,
-        compa: compaHab + compaCom + compaProg + compaLog
-      });
+      setPuntosTotales({ yo: puntosYo, compa: puntosCompa });
     }
-    calcularPuntos();
-    // eslint-disable-next-line
-  }, [mes, user]);
+    fetchPuntosMes();
+  }, [user]);
 
   // Ranking mensual con medallas
   const yo = ranking.find(u => u.userId === user?.uid);
@@ -81,33 +60,31 @@ export default function StatsPage() {
   const [desglose, setDesglose] = useState({ yo: { habitos: 0, comidas: 0, progreso: 0, logros: 0 }, compa: { habitos: 0, comidas: 0, progreso: 0, logros: 0 } });
 
   useEffect(() => {
-    async function calcularDesglose() {
+    async function fetchDesgloseMes() {
       if (!user) return;
-      const [habitos, comidas, progreso, logros] = await Promise.all([
-        getMonthlyHabits(user.uid, mes),
-        getMonthlyMeals(user.uid, mes),
-        getMonthlyProgressPoints(user.uid, mes),
-        getMonthlyLogros(user.uid, mes)
-      ]);
+      // Leer desgloseMes de Firestore para usuario y compañero
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      let desgloseYo = { habitos: 0, comidas: 0 };
+      let desgloseCompa = { habitos: 0, comidas: 0 };
       let compaId = null;
-      const allUsers = await getAllUsers();
-      const compaUser = allUsers.find(u => u.uid !== user.uid);
-      let compaHab = 0, compaCom = 0, compaProg = 0, compaLog = 0;
-      if (compaUser) {
-        compaId = compaUser.uid;
-        [compaHab, compaCom, compaProg, compaLog] = await Promise.all([
-          getMonthlyHabits(compaId, mes),
-          getMonthlyMeals(compaId, mes),
-          getMonthlyProgressPoints(compaId, mes),
-          getMonthlyLogros(compaId, mes)
-        ]);
+      if (userSnap.exists()) {
+        desgloseYo = userSnap.data().desgloseMes || { habitos: 0, comidas: 0 };
+        compaId = userSnap.data().companeroId;
+      }
+      if (compaId) {
+        const compaRef = doc(db, 'users', compaId);
+        const compaSnap = await getDoc(compaRef);
+        if (compaSnap.exists()) {
+          desgloseCompa = compaSnap.data().desgloseMes || { habitos: 0, comidas: 0 };
+        }
       }
       setDesglose({
-        yo: { habitos, comidas, progreso, logros },
-        compa: { habitos: compaHab, comidas: compaCom, progreso: compaProg, logros: compaLog }
+        yo: { ...desgloseYo },
+        compa: { ...desgloseCompa }
       });
     }
-    calcularDesglose();
+    fetchDesgloseMes();
   }, [mes, user]);
 
   // Logros y rachas (simulado)
@@ -119,41 +96,42 @@ export default function StatsPage() {
   // Ranking histórico real de puntos
   const [historial, setHistorial] = useState([]);
   useEffect(() => {
-    async function calcularHistorial() {
+    async function fetchHistorial() {
       if (!user) return;
-      // Obtener los últimos 6 meses (incluyendo el actual)
-      const meses = [];
-      for (let i = 5; i >= 0; i--) {
-        meses.push(dayjs().subtract(i, 'month').format('YYYY-MM'));
+      // Leer puntosHistoricos de Firestore para usuario y compañero
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      let puntosHistoricosYo = {};
+      let puntosHistoricosCompa = {};
+      let compaId = null;
+      if (userSnap.exists()) {
+        puntosHistoricosYo = userSnap.data().puntosHistoricos || {};
+        compaId = userSnap.data().companeroId;
       }
-      const allUsers = await getAllUsers();
-      const compaUser = allUsers.find(u => u.uid !== user.uid);
-      const compaId = compaUser ? compaUser.uid : null;
-      const historialData = await Promise.all(meses.map(async m => {
-        const [yoHab, yoCom, yoProg, yoLog] = await Promise.all([
-          getMonthlyHabits(user.uid, m),
-          getMonthlyMeals(user.uid, m),
-          getMonthlyProgressPoints(user.uid, m),
-          getMonthlyLogros(user.uid, m)
-        ]);
-        let compaHab = 0, compaCom = 0, compaProg = 0, compaLog = 0;
-        if (compaId) {
-          [compaHab, compaCom, compaProg, compaLog] = await Promise.all([
-            getMonthlyHabits(compaId, m),
-            getMonthlyMeals(compaId, m),
-            getMonthlyProgressPoints(compaId, m),
-            getMonthlyLogros(compaId, m)
-          ]);
+      if (compaId) {
+        const compaRef = doc(db, 'users', compaId);
+        const compaSnap = await getDoc(compaRef);
+        if (compaSnap.exists()) {
+          puntosHistoricosCompa = compaSnap.data().puntosHistoricos || {};
         }
-        return {
-          mes: m,
-          yo: yoHab + yoCom + yoProg + yoLog,
-          compa: compaHab + compaCom + compaProg + compaLog
-        };
+      }
+      // Obtener todos los meses desde enero hasta el mes actual del año actual
+      const meses = [];
+      const now = dayjs();
+      const year = now.year();
+      const mesActual = now.month() + 1;
+      for (let m = 1; m <= mesActual; m++) {
+        const mesStr = `${year}-${m.toString().padStart(2, '0')}`;
+        meses.push(mesStr);
+      }
+      const historialData = meses.map(m => ({
+        mes: m,
+        yo: puntosHistoricosYo[m] || 0,
+        compa: puntosHistoricosCompa[m] || 0
       }));
       setHistorial(historialData);
     }
-    calcularHistorial();
+    fetchHistorial();
   }, [user]);
 
   return (
@@ -213,8 +191,7 @@ export default function StatsPage() {
             <ul className="text-white text-base font-medium space-y-1">
               <li>Hábitos: <span className="font-bold text-blue-300">{desglose.yo.habitos}</span></li>
               <li>Comidas: <span className="font-bold text-blue-300">{desglose.yo.comidas}</span></li>
-              <li>Progreso: <span className="font-bold text-blue-300">{desglose.yo.progreso}</span></li>
-              <li>Logros: <span className="font-bold text-blue-300">{desglose.yo.logros}</span></li>
+              <li>Rachas: <span className="font-bold text-blue-300">{desglose.yo.progreso}</span></li>
             </ul>
           </div>
             <div className="bg-gradient-to-br from-green-600 to-green-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
@@ -222,8 +199,7 @@ export default function StatsPage() {
             <ul className="text-white text-base font-medium space-y-1">
               <li>Hábitos: <span className="font-bold text-green-300">{desglose.compa.habitos}</span></li>
               <li>Comidas: <span className="font-bold text-green-300">{desglose.compa.comidas}</span></li>
-              <li>Progreso: <span className="font-bold text-green-300">{desglose.compa.progreso}</span></li>
-              <li>Logros: <span className="font-bold text-green-300">{desglose.compa.logros}</span></li>
+              <li>Rachas: <span className="font-bold text-green-300">{desglose.compa.progreso}</span></li>
             </ul>
           </div>
         </div>
@@ -237,14 +213,14 @@ export default function StatsPage() {
             <thead>
               <tr className="bg-gray-700 text-blue-200 text-base">
                 <th className="py-3 px-4">Mes</th>
-                <th className="py-3 px-4">Puntos Tú</th>
-                <th className="py-3 px-4">Puntos Compañero</th>
+                <th className="py-3 px-4">Tus puntos</th>
+                <th className="py-3 px-4">Puntos de tu compañero</th>
               </tr>
             </thead>
             <tbody>
               {historial.map((h,i)=>(
                 <tr key={i} className="border-b border-gray-700 last:border-none hover:bg-gray-800 transition">
-                  <td className="py-3 px-4 font-medium text-white">{dayjs(h.mes).format('MMMM YYYY')}</td>
+                  <td className="py-3 px-4 font-medium text-white">{dayjs(h.mes).locale('es').format('MMMM YYYY')}</td>
                   <td className="py-3 px-4 font-bold text-blue-300">{h.yo}</td>
                   <td className="py-3 px-4 font-bold text-green-300">{h.compa}</td>
                 </tr>
