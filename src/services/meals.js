@@ -17,8 +17,23 @@ import dayjs from 'dayjs';
 // { userId, fecha, desayuno: {foto, puntuacion}, almuerzo: {...}, merienda: {...}, cena: {...}, excepcion, bonoPerfecto }
 
 export async function saveDailyMeals(userId, fecha, data) {
+	// Limpia todos los campos undefined en data y sus subcampos
+	function deepClean(obj) {
+		if (Array.isArray(obj)) {
+			return obj.map(deepClean);
+		} else if (obj && typeof obj === 'object') {
+			return Object.entries(obj)
+				.filter(([_, v]) => v !== undefined)
+				.reduce((acc, [k, v]) => {
+					acc[k] = deepClean(v);
+					return acc;
+				}, {});
+		}
+		return obj;
+	}
+	const cleanData = deepClean({ userId, fecha, ...data });
 	const ref = doc(db, 'meals', `${userId}_${fecha}`);
-	await setDoc(ref, { userId, fecha, ...data }, { merge: true });
+	await setDoc(ref, cleanData, { merge: true });
 	// Actualiza ranking automáticamente
 	const mes = dayjs(fecha).format('YYYY-MM');
 	await calcularYActualizarRanking(mes);
