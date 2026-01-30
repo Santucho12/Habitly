@@ -26,10 +26,14 @@ export default function Achievements() {
       <h1 className="text-3xl font-bold mb-4 text-center">Logros y Medallas</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {achievements.map((ach, i) => (
-          <div key={i} className="bg-white/90 rounded-xl shadow p-6 flex flex-col items-center gap-2 border border-gray-200">
-            {ach.icon}
-            <div className="font-semibold text-lg text-gray-900">{ach.title}</div>
-            <div className="text-gray-600 text-sm text-center">{ach.desc}</div>
+          <div key={i} className="relative rounded-xl shadow p-6 flex flex-col items-center gap-2 border border-gray-200 overflow-hidden">
+            {/* Fondo con opacidad */}
+            <div className="absolute inset-0 rounded-xl" style={{ background: 'rgba(255,255,255,0.1)', zIndex: 0 }} />
+            <div className="relative z-10 flex flex-col items-center gap-2 w-full text-white">
+              {ach.icon}
+              <div className="font-semibold text-lg">{ach.title}</div>
+              <div className="text-sm text-center">{ach.desc}</div>
+            </div>
           </div>
         ))}
       </div>
