@@ -17,7 +17,6 @@ export default function EstadisticasComparativo({ usuario, companero }) {
   const mesActual = dayjs().format('YYYY-MM');
   useEffect(() => {
     async function fetchStats() {
-      // Actualiza ranking y puntos automáticamente al montar
       await calcularYActualizarRanking(mesActual);
       const ranking = await getMonthlyRanking(mesActual);
       let puntosU = 0;
@@ -28,17 +27,44 @@ export default function EstadisticasComparativo({ usuario, companero }) {
         puntosU = user?.puntos ?? 0;
         puntosC = compa?.puntos ?? 0;
       }
+      // Si puntosU o puntosC son 0, intentar leer desgloseMes de Firestore
+      try {
+        const { doc, getDoc } = await import('firebase/firestore');
+        const { db } = await import('../../services/firebase');
+        if (usuarioId && puntosU === 0) {
+          const userRef = doc(db, 'users', usuarioId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const desglose = userSnap.data().desgloseMes;
+            if (desglose) {
+              puntosU = (desglose.comidas || 0) + (desglose.habitos || 0) + (desglose.progreso || 0) + (desglose.logros || 0);
+            }
+          }
+        }
+        if (companeroId && puntosC === 0) {
+          const compaRef = doc(db, 'users', companeroId);
+          const compaSnap = await getDoc(compaRef);
+          if (compaSnap.exists()) {
+            const desglose = compaSnap.data().desgloseMes;
+            if (desglose) {
+              puntosC = (desglose.comidas || 0) + (desglose.habitos || 0) + (desglose.progreso || 0) + (desglose.logros || 0);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[Comparativo] Error leyendo desgloseMes:', err);
+      }
       setPuntosUsuario(puntosU);
       setPuntosCompanero(puntosC);
       // Ranking: el que más puntos tiene es 1, el otro 2
-      if (puntosU === puntosC) {
-        setRankingUsuario(1);
-        setRankingCompanero(1);
-      } else if (puntosU > puntosC) {
+      if (puntosU > puntosC) {
         setRankingUsuario(1);
         setRankingCompanero(2);
-      } else {
+      } else if (puntosU < puntosC) {
         setRankingUsuario(2);
+        setRankingCompanero(1);
+      } else {
+        setRankingUsuario(1);
         setRankingCompanero(1);
       }
     }
