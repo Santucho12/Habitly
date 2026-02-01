@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import { getDailyActivity } from '../../services/habits';
 import dayjs from 'dayjs';
 import { Bar } from 'react-chartjs-2';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import { getHabitsByUser } from '../../services/habitService';
 import { saveDailyActivity, getDailyActivity } from '../../services/habits';
 import { calcularPuntosDia } from '../../utils/points';
@@ -345,4 +345,3 @@ const ACTIVITIES = [
       </div>
           </div>
   );
-}

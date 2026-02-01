@@ -1,3 +1,11 @@
+import { doc, getDoc } from 'firebase/firestore';
+
+// Devuelve las estadísticas individuales del usuario
+export async function getUserStats(uid) {
+  const statsDoc = doc(db, 'stats', uid);
+  const snap = await getDoc(statsDoc);
+  return snap.exists() ? snap.data() : null;
+}
 import { db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
 

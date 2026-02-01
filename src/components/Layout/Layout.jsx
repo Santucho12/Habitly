@@ -41,17 +41,10 @@ export default function Layout({ children }) {
         <main
           className="flex-1 p-4 overflow-y-auto"
           style={{
-            paddingTop: '7.3rem'
+            paddingTop: '190px'
           }}
         >
-          {activityName && (
-            <h1
-              className="text-2xl font-bold mb-6 text-white"
-              style={['Check-list','Comidas','Estadísticas','Progreso','Logros','Perfil'].includes(activityName) ? { marginTop: '30px' } : {}}
-            >
-              {activityName}
-            </h1>
-          )}
+          {/* Título de sección eliminado */}
           <div key={location.pathname} className="transition-all duration-500 ease-in-out animate-fadein">
             {children}
           </div>

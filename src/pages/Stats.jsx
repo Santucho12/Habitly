@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useUserNames } from '../hooks/useUserNames';
 import { useFechaActual } from '../context/FechaContext';
 import EmptyState from '../components/EmptyState';
 import { getMonthlyRanking } from '../services/ranking';
@@ -30,6 +31,7 @@ import { db } from '../services/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export default function StatsPage() {
+  const { myName, companionName } = useUserNames();
   const { fechaActual } = useFechaActual();
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -118,29 +120,20 @@ export default function StatsPage() {
   useEffect(() => {
     if (!user) return;
     async function fetchPuntosMes() {
-      // Si hay puntos en localStorage, usarlos para el usuario
-      if (localPuntos) {
-        setPuntosTotales(pt => ({ ...pt, yo: localPuntos.puntosMes }));
+      // Leer ranking mensual para ambos usuarios
+      const rankingData = await getMonthlyRanking(mes);
+      if (rankingData && rankingData.usuarios) {
+        const yo = rankingData.usuarios.find(u => u.userId === user.uid);
+        const compaId = yo?.companeroId || (await getDoc(doc(db, 'users', user.uid))).data()?.companeroId;
+        const compa = rankingData.usuarios.find(u => u.userId === compaId);
+        setPuntosTotales({
+          yo: yo?.puntos ?? 0,
+          compa: compa?.puntos ?? 0
+        });
       }
-      // Leer puntosMes de Firestore para compañero
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-      let puntosCompa = 0;
-      let compaId = null;
-      if (userSnap.exists()) {
-        compaId = userSnap.data().companeroId;
-      }
-      if (compaId) {
-        const compaRef = doc(db, 'users', compaId);
-        const compaSnap = await getDoc(compaRef);
-        if (compaSnap.exists()) {
-          puntosCompa = compaSnap.data().puntosMes || 0;
-        }
-      }
-      setPuntosTotales(pt => ({ ...pt, compa: puntosCompa }));
     }
     fetchPuntosMes();
-  }, [user]);
+  }, [user, mes]);
 
   // Ranking mensual con medallas
   const yo = ranking.find(u => u.userId === user?.uid);
@@ -246,7 +239,7 @@ export default function StatsPage() {
           {yo && (
             <tr className="bg-blue-900 text-blue-300 font-bold animate-fade-in">
               <td className="py-2 px-2">{yo.posicion}</td>
-              <td className="py-2 px-2">Tú</td>
+              <td className="py-2 px-2">{myName}</td>
               <td className="py-2 px-2">{yo.puntos}</td>
               <td className="py-2 px-2 text-2xl">{medalla(yo.posicion)}</td>
             </tr>
@@ -254,7 +247,7 @@ export default function StatsPage() {
           {compa && (
             <tr className="bg-green-900 text-green-300 font-bold animate-fade-in">
               <td className="py-2 px-2">{compa.posicion}</td>
-              <td className="py-2 px-2">Compañero</td>
+              <td className="py-2 px-2">{companionName}</td>
               <td className="py-2 px-2">{compa.puntos}</td>
               <td className="py-2 px-2 text-2xl">{medalla(compa.posicion)}</td>
             </tr>
@@ -267,11 +260,11 @@ export default function StatsPage() {
         <h3 className="text-lg font-semibold text-blue-400 mb-4 tracking-wide text-center">Puntos totales del mes</h3>
           <div className="flex flex-row gap-1 sm:gap-4 justify-center w-full">
             <div className="bg-gradient-to-br from-blue-700 to-blue-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
-            <span className="font-semibold text-blue-200 text-lg mb-2">Tú</span>
+            <span className="font-semibold text-blue-200 text-lg mb-2">{myName}</span>
             <span className="text-4xl font-bold text-white drop-shadow">{puntosTotales.yo}</span>
           </div>
             <div className="bg-gradient-to-br from-green-700 to-green-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
-            <span className="font-semibold text-green-200 text-lg mb-2">Compañero</span>
+            <span className="font-semibold text-green-200 text-lg mb-2">{companionName}</span>
             <span className="text-4xl font-bold text-white drop-shadow">{puntosTotales.compa}</span>
           </div>
         </div>
@@ -282,7 +275,7 @@ export default function StatsPage() {
         <h3 className="text-lg font-semibold text-blue-400 mb-4 tracking-wide text-center">Desglose de puntos</h3>
           <div className="flex flex-row gap-1 sm:gap-4 justify-center w-full">
             <div className="bg-gradient-to-br from-blue-600 to-blue-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
-            <span className="font-semibold text-blue-200 text-lg mb-2">Tú</span>
+            <span className="font-semibold text-blue-200 text-lg mb-2">{myName}</span>
             <ul className="text-white text-base font-medium space-y-1">
               <li>Hábitos: <span className="font-bold text-blue-300">{desglose.yo.habitos}</span></li>
               <li>Comidas: <span className="font-bold text-blue-300">{desglose.yo.comidas}</span></li>
@@ -290,7 +283,7 @@ export default function StatsPage() {
             </ul>
           </div>
             <div className="bg-gradient-to-br from-green-600 to-green-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
-            <span className="font-semibold text-green-200 text-lg mb-2">Compañero</span>
+            <span className="font-semibold text-green-200 text-lg mb-2">{companionName}</span>
             <ul className="text-white text-base font-medium space-y-1">
               <li>Hábitos: <span className="font-bold text-green-300">{desglose.compa.habitos}</span></li>
               <li>Comidas: <span className="font-bold text-green-300">{desglose.compa.comidas}</span></li>
@@ -309,7 +302,7 @@ export default function StatsPage() {
               <tr className="bg-gray-700 text-blue-200 text-base">
                 <th className="py-3 px-4">Mes</th>
                 <th className="py-3 px-4">Tus puntos</th>
-                <th className="py-3 px-4">Puntos de tu compañero</th>
+                <th className="py-3 px-4">Puntos de {companionName}</th>
               </tr>
             </thead>
             <tbody>

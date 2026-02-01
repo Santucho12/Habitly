@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import AppLogo from '../../assets/icons/AppLogo.jsx';
 import CompanionAvatar from '../../assets/icons/CompanionAvatar.jsx';
 import '../../styles/appTitleAnimation.css';

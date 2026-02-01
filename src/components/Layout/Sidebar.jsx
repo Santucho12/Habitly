@@ -13,6 +13,7 @@ export default function Sidebar({ open, setOpen, children }) {
     { icon: '📊', label: 'Estadísticas', path: '/stats' },
     { icon: '🥇', label: 'Logros', path: '/achievements' },
     { icon: '👤', label: 'Perfil', path: '/profile' },
+    // { icon: '🔗', label: 'Vincular Usuarios', path: '/pairing' },
   ];
 
   // El sidebar está oculto (translate-x-[-100%]) cuando open es false

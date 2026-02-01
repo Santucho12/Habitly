@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth, AuthProvider } from './context/AuthContext';
+import React, { useEffect } from 'react';
 
 // Hack para iOS PWA: forzar scroll para que el safe-area se aplique correctamente al cargar
 function IOSPWAScrollHack() {
@@ -14,11 +15,11 @@ function IOSPWAScrollHack() {
   }, []);
   return null;
 }
+import Pairing from './pages/Pairing';
 import ThemeProvider from './components/ThemeProvider';
 // import ErrorBoundary from './components/ErrorBoundary';
 import { Link, Routes, Route, Navigate } from 'react-router-dom';
-import { auth } from './services/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+// ...existing code...
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -33,32 +34,7 @@ import StatsPage from './pages/Stats';
 import ProfilePage from './pages/Profile';
 import AchievementsPage from './pages/Achievements';
 
-const AuthContext = createContext();
-
-export function useAuth() {
-  return useContext(AuthContext);
-}
-
-function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
-
-  const logout = () => signOut(auth);
-
-  return (
-    <AuthContext.Provider value={{ user, loading, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
+// ...existing code...
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -91,6 +67,7 @@ export default function App() {
                     <Route path="/stats" element={<StatsPage />} />
                     <Route path="/achievements" element={<AchievementsPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/pairing" element={<Pairing />} />
                   </Routes>
                 </Layout>
               </PrivateRoute>

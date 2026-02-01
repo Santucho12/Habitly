@@ -25,15 +25,15 @@ export async function pairUsers(userId, companionId) {
   // Validación estricta: si alguno ya tiene compañero, no permitir
   const userSnap = await getDoc(userRef);
   const companionSnap = await getDoc(companionRef);
-  if (userSnap.exists() && userSnap.data().companeroId) {
+  if (userSnap.exists() && userSnap.data().companionId) {
     throw new Error('Ya tienes un compañero asignado.');
   }
-  if (companionSnap.exists() && companionSnap.data().companeroId) {
+  if (companionSnap.exists() && companionSnap.data().companionId) {
     throw new Error('El usuario ya tiene compañero.');
   }
   // Actualiza ambos perfiles con el id del compañero
-  await updateDoc(userRef, { companeroId: companionId });
-  await updateDoc(companionRef, { companeroId: userId });
+  await updateDoc(userRef, { companionId: companionId });
+  await updateDoc(companionRef, { companionId: userId });
 }
 
 // Verifica si el usuario ya tiene compañero
@@ -41,7 +41,7 @@ export async function hasCompanion(userId) {
   const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
   if (userSnap.exists()) {
-    return !!userSnap.data().companeroId;
+    return !!userSnap.data().companionId;
   }
   return false;
 }
@@ -51,12 +51,12 @@ export async function getCompanionData(userId) {
   const userRef = doc(db, 'users', userId);
   const userSnap = await getDoc(userRef);
   if (userSnap.exists()) {
-    const companeroId = userSnap.data().companeroId;
-    if (companeroId) {
-      const companeroRef = doc(db, 'users', companeroId);
-      const companeroSnap = await getDoc(companeroRef);
-      if (companeroSnap.exists()) {
-        return { id: companeroSnap.id, ...companeroSnap.data() };
+    const companionId = userSnap.data().companionId;
+    if (companionId) {
+      const companionRef = doc(db, 'users', companionId);
+      const companionSnap = await getDoc(companionRef);
+      if (companionSnap.exists()) {
+        return { id: companionSnap.id, ...companionSnap.data() };
       }
     }
   }

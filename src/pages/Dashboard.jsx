@@ -1,6 +1,6 @@
 import RankingMes from '../components/Ranking/RankingMes';
 import ComparacionCompanero from '../components/Ranking/ComparacionCompanero';
-import { useAuth } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { useEffect, useState } from 'react';
 import { getHabitsByUser, addHabit } from '../services/habitService';
 import CompanionPairing from '../components/Companion/CompanionPairing';

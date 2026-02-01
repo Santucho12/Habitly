@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import { getDailyActivity } from '../../services/habits';
 import { getDailyMeals } from '../../services/meals';
 import { getMonthlyProgress } from '../../services/progress';

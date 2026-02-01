@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useUserNames } from '../hooks/useUserNames';
 import EmptyState from '../components/EmptyState';
 import { getMonthlyRanking } from '../services/ranking';
 import { getAuth } from 'firebase/auth';
@@ -6,6 +7,7 @@ import dayjs from 'dayjs';
 import { useFechaActual } from '../context/FechaContext';
 
 function Ranking() {
+  const { myName, companionName } = useUserNames();
 
 
   const [ranking, setRanking] = useState([]);
@@ -77,7 +79,7 @@ function Ranking() {
           {yo && (
             <tr className="bg-blue-900 text-blue-300 font-bold animate-fade-in">
               <td className="py-2 px-2">{yo.posicion}</td>
-              <td className="py-2 px-2">Tú</td>
+              <td className="py-2 px-2">{myName}</td>
                 <td className="py-2 px-2">{yo?.puntos ?? 0}</td>
               <td className="py-2 px-2 text-2xl">{medalla(yo.posicion)}</td>
             </tr>
@@ -85,7 +87,7 @@ function Ranking() {
           {compa && (
             <tr className="bg-green-900 text-green-300 font-bold animate-fade-in">
               <td className="py-2 px-2">{compa.posicion}</td>
-              <td className="py-2 px-2">Compañero</td>
+              <td className="py-2 px-2">{companionName}</td>
                 <td className="py-2 px-2">{compa?.puntos ?? 0}</td>
               <td className="py-2 px-2 text-2xl">{medalla(compa.posicion)}</td>
             </tr>
@@ -98,11 +100,11 @@ function Ranking() {
         <h3 className="text-lg font-semibold text-blue-400 mb-4 tracking-wide text-center">Puntos totales del mes</h3>
         <div className="flex gap-6 justify-center">
           <div className="bg-gradient-to-br from-blue-700 to-blue-900 shadow-lg rounded-2xl px-6 py-5 flex flex-col items-center w-44">
-            <span className="font-semibold text-blue-200 text-lg mb-2">Tú</span>
+            <span className="font-semibold text-blue-200 text-lg mb-2">{myName}</span>
             <span className="text-4xl font-bold text-white drop-shadow">{yo?.puntos ?? 0}</span>
           </div>
           <div className="bg-gradient-to-br from-green-700 to-green-900 shadow-lg rounded-2xl px-6 py-5 flex flex-col items-center w-44">
-            <span className="font-semibold text-green-200 text-lg mb-2">Compañero</span>
+            <span className="font-semibold text-green-200 text-lg mb-2">{companionName}</span>
             <span className="text-4xl font-bold text-white drop-shadow">{compa?.puntos ?? 0}</span>
           </div>
         </div>

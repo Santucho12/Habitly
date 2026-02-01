@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useUserNames } from '../../hooks/useUserNames';
 import { getMonthlyRanking } from '../../services/ranking';
 import { getAuth } from 'firebase/auth';
 import dayjs from 'dayjs';
 
 export default function RankingMes() {
+  const { myName } = useUserNames();
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const user = getAuth().currentUser;
@@ -34,7 +36,7 @@ export default function RankingMes() {
           {ranking.sort((a,b)=>a.posicion-b.posicion).map((u) => (
             <tr key={u.userId} className={u.userId === user?.uid ? 'bg-blue-900 text-blue-300 font-bold' : ''}>
               <td className="py-1">{u.posicion}</td>
-              <td className="py-1">{u.userId === user?.uid ? 'Tú' : u.userId}</td>
+              <td className="py-1">{u.userId === user?.uid ? myName : u.userId}</td>
               <td className="py-1">{u.puntos}</td>
             </tr>
           ))}

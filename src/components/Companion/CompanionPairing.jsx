@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import { generateCompanionCode, findUserByCode, pairUsers, hasCompanion } from '../../services/companion';
 import QRCode from 'react-qr-code';
 

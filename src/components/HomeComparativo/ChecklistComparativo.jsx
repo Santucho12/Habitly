@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import { getHabitsByUser } from '../../services/habitService';
 import { saveDailyActivity, getDailyActivity } from '../../services/habits';
 import { calcularPuntosDia } from '../../utils/points';
@@ -42,7 +42,7 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
       const habitsData = await getHabitsByUser(uid);
       setHabits(habitsData);
       const todayData = await getDailyActivity(uid, today);
-      setChecked(todayData || {});
+      setChecked(todayData && typeof todayData === 'object' ? todayData : {});
       // Semana
       const weekStart = dayjs().startOf('week');
       let weekArr = [];
@@ -153,7 +153,75 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
     }, { merge: true });
   };
 
-  if (loading) return <div>Cargando check-list...</div>;
+  if (loading) {
+    return (
+      <div
+        className="bg-gradient-to-br from-gray-800 via-gray-700 to-gray-900 rounded-2xl p-5 mb-8 shadow-xl"
+        style={{ transform: 'scale(0.57)', transformOrigin: 'top left' }}
+      >
+        <div className="flex flex-col gap-6 mb-6">
+          {habits.length === 0 ? (
+            <div className="text-center text-blue-200 font-semibold py-4">No hay hábitos configurados.</div>
+          ) : (
+            habits.map(habit => {
+              let icon = '✅';
+              let badgeColor = 'bg-blue-500';
+              let points = 10;
+              const nameLower = habit.name?.toLowerCase() || '';
+              if (habit.type === 'gym' || nameLower === 'gimnasio' || nameLower === 'gym') {
+                icon = '🏋️‍♂️';
+                badgeColor = 'bg-green-500';
+                points = 10;
+              } else if (habit.type === 'correr' || nameLower === 'correr') {
+                icon = '🏃‍♂️';
+                badgeColor = 'bg-blue-500';
+                points = 15;
+              } else if (habit.type === 'caminar' || nameLower === 'caminar') {
+                icon = '🚶‍♂️';
+                badgeColor = 'bg-cyan-300';
+                points = 8;
+              }
+              // Progreso semanal
+              const daysDone = weekActivities.filter(d => d[habit.type] || d[nameLower]).length;
+              const meta = (typeof habit.meta === 'number' ? habit.meta : (typeof habit.goal === 'number' ? habit.goal : 0));
+              return (
+                <div key={habit.id || habit.type || habit.name} className="flex items-center justify-between bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-3 mb-1 shadow-lg border border-gray-700 opacity-60">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{icon}</span>
+                    <input type="checkbox" disabled className="w-6 h-6 opacity-50" />
+                    <span className="font-bold text-white text-lg tracking-wide">{habit.name}</span>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="bg-blue-500 text-white text-[7px] font-bold px-2 py-0.5 rounded-full shadow">+{points} pts</span>
+                    <span className={`${badgeColor} text-white text-[7px] px-2 py-0.5 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+        <div className="mt-8">
+          <div className="flex flex-row justify-center gap-2 sm:gap-4">
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="flex flex-col items-center w-8 h-14 sm:w-12 group">
+                <span className="text-xs sm:text-base text-white mb-1 sm:mb-2 font-bold drop-shadow">{'LMXJVSD'[i]}</span>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gray-700 border-2 border-white" />
+              </div>
+            ))}
+          </div>
+          <div className="w-full max-w-full px-2 mt-2">
+            <div className="flex justify-between mb-1">
+              <span className="text-sm text-gray-200 font-semibold">Progreso semanal</span>
+              <span className="text-sm text-blue-400 font-bold">-/- (0%)</span>
+            </div>
+            <div className="w-full h-4 bg-gray-600 rounded-full overflow-hidden shadow max-w-full">
+              <div className="h-4 bg-gradient-to-r from-green-400 via-blue-400 to-blue-600 rounded-full transition-all duration-500" style={{ width: `0%` }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -162,43 +230,51 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
     >
       {/* Título eliminado por solicitud */}
       <div className="flex flex-col gap-6 mb-6">
-        {ACTIVITIES.map(act => {
-          const daysDone = weekActivities.filter(d => d[act.key]).length;
-          // Buscar meta semanal para la actividad
-          const habit = habits.find(h => h.type === act.key || h.name?.toLowerCase() === act.key);
-          const meta = habit?.meta || habit?.goal || 1;
-          // Color badge según actividad
-          let badgeColor = '';
-          if (act.key === 'gym') badgeColor = 'bg-green-500';
-          else if (act.key === 'caminar') badgeColor = 'bg-cyan-300';
-          else if (act.key === 'correr') badgeColor = 'bg-blue-500';
-          return (
-            <div key={act.key} className="flex items-center justify-between bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-3 mb-1 shadow-lg border border-gray-700">
-              <div className="flex items-center gap-3">
-                {/* Iconos grandes */}
-                {act.key === 'gym' && <span role="img" aria-label="Gimnasio" className="text-2xl">🏋️‍♂️</span>}
-                {act.key === 'correr' && <span role="img" aria-label="Correr" className="text-2xl">🏃‍♂️</span>}
-                {act.key === 'caminar' && <span role="img" aria-label="Caminar" className="text-2xl">🚶‍♂️</span>}
-                <input
-                  type="checkbox"
-                  checked={!!checked[act.key]}
-                  onChange={usuarioType === 'yo' ? () => handleCheck(act.key) : undefined}
-                  disabled={usuarioType !== 'yo' || !!checked[act.key]}
-                  className={`w-6 h-6 transition-all duration-200 ${
-                    act.key === 'gym' ? 'accent-green-500' :
-                    act.key === 'correr' ? 'accent-blue-500' :
-                    act.key === 'caminar' ? 'accent-cyan-300' : 'accent-blue-500'
-                  } ${usuarioType !== 'yo' ? 'opacity-60 cursor-not-allowed' : ''}`}
-                />
-                <span className="font-bold text-white text-lg tracking-wide">{act.label}</span>
+        {habits.length === 0 ? (
+          <div className="text-center text-blue-200 font-semibold py-4">No hay hábitos configurados.</div>
+        ) : (
+          habits.map(habit => {
+            let icon = '✅';
+            let badgeColor = 'bg-blue-500';
+            let points = 10;
+            const nameLower = habit.name?.toLowerCase() || '';
+            if (habit.type === 'gym' || nameLower === 'gimnasio' || nameLower === 'gym') {
+              icon = '🏋️‍♂️';
+              badgeColor = 'bg-green-500';
+              points = 10;
+            } else if (habit.type === 'correr' || nameLower === 'correr') {
+              icon = '🏃‍♂️';
+              badgeColor = 'bg-blue-500';
+              points = 15;
+            } else if (habit.type === 'caminar' || nameLower === 'caminar') {
+              icon = '🚶‍♂️';
+              badgeColor = 'bg-cyan-300';
+              points = 8;
+            }
+            // Progreso semanal
+            const daysDone = weekActivities.filter(d => d[habit.type] || d[nameLower]).length;
+            const meta = (typeof habit.meta === 'number' ? habit.meta : (typeof habit.goal === 'number' ? habit.goal : 0));
+            return (
+              <div key={habit.id || habit.type || habit.name} className="flex items-center justify-between bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 rounded-xl px-4 py-3 mb-1 shadow-lg border border-gray-700">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{icon}</span>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(checked && (checked[habit.type] || checked[nameLower]))}
+                    onChange={usuarioType === 'yo' ? () => handleCheck(habit.type || nameLower) : undefined}
+                    disabled={usuarioType !== 'yo' || !!(checked[habit.type] || checked[nameLower])}
+                    className={`w-6 h-6 transition-all duration-200 ${badgeColor} ${usuarioType !== 'yo' ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  />
+                  <span className="font-bold text-white text-lg tracking-wide">{habit.name}</span>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="bg-blue-500 text-white text-[7px] font-bold px-2 py-0.5 rounded-full shadow">+{points} pts</span>
+                  <span className={`${badgeColor} text-white text-[7px] px-2 py-0.5 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
+                </div>
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="bg-blue-500 text-white text-[7px] font-bold px-2 py-0.5 rounded-full shadow">+{act.points} pts</span>
-                <span className={`${badgeColor} text-white text-[7px] px-2 py-0.5 rounded-full font-semibold shadow`}>{daysDone}/{meta} esta semana</span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
       {/* Mensaje motivacional o error estilizado */}
       {error && <div className="bg-red-100 border border-red-400 text-red-700 text-sm rounded-lg px-3 py-2 mb-2 text-center font-semibold shadow">{error}</div>}
@@ -305,14 +381,14 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
         </div>
         {/* Barra de progreso semanal */}
         {!showMonth && (() => {
-          // Sumar metas semanales de todas las actividades
+          // Sumar metas semanales de los hábitos reales
           let totalMeta = 0;
           let totalDone = 0;
-          ACTIVITIES.forEach(act => {
-            const habit = habits.find(h => h.type === act.key || h.name?.toLowerCase() === act.key);
-            const meta = habit?.meta || habit?.goal || 1;
+          habits.forEach(habit => {
+            const nameLower = habit.name?.toLowerCase() || '';
+            const meta = (typeof habit.meta === 'number' ? habit.meta : (typeof habit.goal === 'number' ? habit.goal : 0));
             totalMeta += meta;
-            const done = weekActivities.filter(d => d[act.key]).length;
+            const done = weekActivities.filter(d => d[habit.type] || d[nameLower]).length;
             totalDone += done;
           });
           const percent = totalMeta > 0 ? Math.round((totalDone / totalMeta) * 100) : 0;

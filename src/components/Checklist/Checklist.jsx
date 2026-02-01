@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../context/AuthContext';
 import { getHabitsByUser } from '../../services/habitService';
 import { saveDailyActivity, getDailyActivity } from '../../services/habits';
 import { calcularPuntosDia } from '../../utils/points';
@@ -42,12 +42,14 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
       setHabits(habitsData);
       const todayData = await getDailyActivity(user.uid, today);
       setChecked(todayData || {});
-      // Semana
-      // Ajustar para que la semana inicie en lunes (0 = lunes)
-      const weekStart = dayjs().startOf('week').add(1, 'day');
+      // Semana: lunes a domingo de la semana actual
+      // Buscar el lunes de la semana actual (si hoy es domingo, retroceder 6 días)
+      const todayDate = dayjs(today);
+      const dayOfWeek = todayDate.day(); // 0=domingo, 1=lunes, ...
+      const monday = dayOfWeek === 0 ? todayDate.subtract(6, 'day') : todayDate.startOf('week').add(1, 'day');
       let weekArr = [];
       for (let i = 0; i < 7; i++) {
-        const d = weekStart.add(i, 'day').format('YYYY-MM-DD');
+        const d = monday.add(i, 'day').format('YYYY-MM-DD');
         // eslint-disable-next-line no-await-in-loop
         const act = await getDailyActivity(user.uid, d);
         weekArr.push({
@@ -308,7 +310,7 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
                 <div className="flex flex-row justify-center gap-2 sm:gap-4">
                   {/* Semana horizontal: cada día de izquierda a derecha */}
                   {[...Array(7)].map((_, i) => {
-                    const day = dayjs().startOf('week').add(i, 'day');
+                    // Lunes a domingo
                     const weekDay = ['L','M','M','J','V','S','D'][i];
                     const act = weekActivities[i] || {};
                     const colors = [];
@@ -319,9 +321,10 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
                     let label = '';
                     if (colors.length === 0) {
                       customBg = { backgroundColor: '#181e2a' };
+                      label = '';
                     } else if (colors.length === 1) {
                       customBg = { backgroundColor: colors[0] };
-                      label = act.gym ? 'G' : act.correr ? 'R' : 'C';
+                      label = '';
                     } else {
                       const percent = 100 / colors.length;
                       let gradient = 'conic-gradient(';
@@ -351,13 +354,16 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
               )}
         </div>
         {/* Barra de progreso semanal */}
-        {!showMonth && (() => {
+        {!showMonth && habits.length > 0 && (() => {
           // Sumar metas semanales de todas las actividades
           let totalMeta = 0;
           let totalDone = 0;
           ACTIVITIES.forEach(act => {
             const habit = habits.find(h => h.type === act.key || h.name?.toLowerCase() === act.key);
-            const meta = habit?.meta || habit?.goal || 1;
+            // Si no hay meta definida, cuenta como 0 (no 1 por defecto)
+            const meta = (habit && (typeof habit.meta === 'number' || typeof habit.goal === 'number'))
+              ? (habit.meta ?? habit.goal ?? 0)
+              : 0;
             totalMeta += meta;
             const done = weekActivities.filter(d => d[act.key]).length;
             totalDone += done;
@@ -380,7 +386,7 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
         })()}
       </div>
     {/* Formulario para agregar hábito */}
-    {showAddHabitForm && (
+    {(
       <div className="mt-8 bg-gray-900 rounded-xl p-4 shadow-lg">
         <h4 className="text-lg font-bold text-blue-400 mb-3 text-center">Agregar nuevo hábito</h4>
         <form
@@ -394,9 +400,15 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
               return;
             }
             try {
+              // Mapear el tipo a nombre legible
+              const typeToName = {
+                gym: 'Gimnasio',
+                correr: 'Correr',
+                caminar: 'Caminar',
+              };
               const habitObj = {
                 owner: user.uid,
-                name: newHabitName.trim() || newHabitType,
+                name: typeToName[newHabitType] || newHabitType,
                 type: newHabitType,
                 meta: Number(newHabitMeta) || 1,
                 createdAt: new Date().toISOString(),
@@ -436,28 +448,45 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
             </label>
             <input
               id="metaInput"
-              type="number"
-              min={1}
-              step={1}
+              type="text"
               inputMode="numeric"
               pattern="[0-9]*"
               className="rounded px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none"
               placeholder="Ej: 3"
-              value={newHabitMeta}
-              onChange={e => setNewHabitMeta(Number(e.target.value))}
+              value={newHabitMeta === 0 ? '' : newHabitMeta}
+              onChange={e => {
+                // Permitir vacío, limpiar ceros a la izquierda
+                let val = e.target.value.replace(/^0+/, '');
+                if (val === '') {
+                  setNewHabitMeta('');
+                } else if (/^\d+$/.test(val)) {
+                  setNewHabitMeta(Number(val));
+                }
+              }}
+              maxLength={2}
+              autoComplete="off"
             />
           </div>
           <button
             type="submit"
-            className="bg-green-600 text-white font-bold py-2 rounded shadow hover:bg-green-700 transition"
+            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition"
           >
-            Agregar hábito
+            Guardar hábito
           </button>
-          {addHabitError && <div className="text-red-400 text-sm font-semibold text-center mt-2">{addHabitError}</div>}
-          {addHabitSuccess && <div className="text-green-400 text-sm font-semibold text-center mt-2">{addHabitSuccess}</div>}
+          {/* Mensajes de error y éxito para el formulario de hábito */}
+          {addHabitError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 text-sm rounded-lg px-3 py-2 mt-2 text-center font-semibold shadow">
+              {addHabitError}
+            </div>
+          )}
+          {addHabitSuccess && (
+            <div className="bg-green-100 border border-green-400 text-green-700 text-sm rounded-lg px-3 py-2 mt-2 text-center font-semibold shadow">
+              {addHabitSuccess}
+            </div>
+          )}
         </form>
       </div>
     )}
-    </div>
-  );
+  </div>
+);
 }
