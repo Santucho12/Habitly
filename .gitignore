@@ -1,3 +1,5 @@
+# Ignorar credenciales sensibles
+scripts/serviceAccountKey.json
 # Node
 node_modules/
 dist/
