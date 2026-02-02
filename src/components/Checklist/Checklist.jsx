@@ -275,7 +275,7 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
                             customBg = { backgroundColor: '#181e2a' };
                           } else if (colors.length === 1) {
                             customBg = { backgroundColor: colors[0] };
-                            label = act.gym ? 'G' : act.correr ? 'R' : 'C';
+                            label = '';
                           } else {
                             const percent = 100 / colors.length;
                             let gradient = 'conic-gradient(';
