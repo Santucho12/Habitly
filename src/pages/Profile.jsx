@@ -5,9 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import { uploadProfilePhoto } from '../services/storage';
 import { uploadImageToCloudinary } from '../services/cloudinary';
 import { updateProfile } from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, authUser, logout } = useAuth();
   const fileInputRef = useRef();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -32,10 +34,17 @@ export default function Profile() {
       const cloudinaryResult = await uploadImageToCloudinary(file);
       if (!cloudinaryResult.secure_url) throw new Error('Error al subir a Cloudinary');
       const url = cloudinaryResult.secure_url;
-      await updateProfile(user, { photoURL: url });
+      await updateProfile(authUser, { photoURL: url });
+      // Actualizar también en Firestore
+      await updateDoc(doc(db, 'users', authUser.uid), { photoURL: url });
       setPhotoURL(url);
     } catch (err) {
       setError('Error al subir la foto');
+      // Log detallado para depuración
+      console.error('Error al subir la foto de perfil:', err);
+      if (err.response) {
+        err.response.text().then(text => console.error('Respuesta Cloudinary:', text));
+      }
     } finally {
       setUploading(false);
     }

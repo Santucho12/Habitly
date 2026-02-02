@@ -41,7 +41,7 @@ export function AuthProvider({ children }) {
   // Unificamos los datos de auth y firestore para exponerlos juntos
   const mergedUser = user && userData ? { ...user, ...userData } : user;
   return (
-    <AuthContext.Provider value={{ user: mergedUser, loading, logout }}>
+    <AuthContext.Provider value={{ user: mergedUser, authUser: user, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
