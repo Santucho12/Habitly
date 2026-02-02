@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function HomeComparativoPage() {
   const { user } = useAuth();
-  const companeroId = user?.companionId || null;
+  const companeroId = user?.companeroId || null;
   // Si no hay compañero, igual renderiza la página (puedes mostrar un estado vacío en los componentes si lo deseas)
 
   // Loader para el checklist del compañero

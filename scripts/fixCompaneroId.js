@@ -28,6 +28,12 @@ async function fixCompaneroId() {
   let updated = 0;
   for (const doc of snapshot.docs) {
     const data = doc.data();
+    // Eliminar campo 'compañeroId' (con tilde) si existe
+    if (Object.prototype.hasOwnProperty.call(data, 'compañeroId')) {
+      await doc.ref.update({ 'compañeroId': admin.firestore.FieldValue.delete() });
+      updated++;
+      console.log(`Usuario ${doc.id}: campo 'compañeroId' eliminado.`);
+    }
     // Si tiene companionId pero no companeroId, lo copiamos
     if (data.companionId && !data.companeroId) {
       await doc.ref.update({ companeroId: data.companionId });
@@ -35,7 +41,7 @@ async function fixCompaneroId() {
       console.log(`Usuario ${doc.id} actualizado: companeroId = ${data.companionId}`);
     }
   }
-  console.log(`Usuarios actualizados: ${updated}`);
+  console.log(`Usuarios actualizados o limpiados: ${updated}`);
 }
 
 fixCompaneroId().catch((err) => {
