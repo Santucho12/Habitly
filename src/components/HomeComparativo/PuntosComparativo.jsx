@@ -59,7 +59,13 @@ export default function PuntosComparativo({ usuarioId, companeroId }) {
         getDailyActivity(usuarioId, hoy),
         getDailyMeals(usuarioId, hoy)
       ]);
-      puntosDiaUsuario = (activityUsuario?.puntos || 0) + (mealsUsuario ? Object.values(mealsUsuario).reduce((acc, m) => acc + (m?.puntuacion || 0), 0) : 0);
+      // Sumar puntos por hábitos chequeados
+      let puntosHabitosUsuario = 0;
+      if (activityUsuario?.gym) puntosHabitosUsuario += 10;
+      if (activityUsuario?.correr) puntosHabitosUsuario += 15;
+      if (activityUsuario?.caminar) puntosHabitosUsuario += 8;
+      const puntosComidasUsuario = mealsUsuario ? Object.values(mealsUsuario).reduce((acc, m) => acc + (m?.puntuacion || 0), 0) : 0;
+      puntosDiaUsuario = puntosHabitosUsuario + puntosComidasUsuario;
       setUsuario(u => ({ ...u, puntosDia: puntosDiaUsuario }));
 
       // Compañero
@@ -69,7 +75,13 @@ export default function PuntosComparativo({ usuarioId, companeroId }) {
           getDailyActivity(compaId, hoy),
           getDailyMeals(compaId, hoy)
         ]);
-        puntosDiaCompa = (activityCompa?.puntos || 0) + (mealsCompa ? Object.values(mealsCompa).reduce((acc, m) => acc + (m?.puntuacion || 0), 0) : 0);
+        // Sumar puntos por hábitos chequeados
+        let puntosHabitosCompa = 0;
+        if (activityCompa?.gym) puntosHabitosCompa += 10;
+        if (activityCompa?.correr) puntosHabitosCompa += 15;
+        if (activityCompa?.caminar) puntosHabitosCompa += 8;
+        const puntosComidasCompa = mealsCompa ? Object.values(mealsCompa).reduce((acc, m) => acc + (m?.puntuacion || 0), 0) : 0;
+        puntosDiaCompa = puntosHabitosCompa + puntosComidasCompa;
         setCompanero(c => ({ ...c, puntosDia: puntosDiaCompa }));
       }
     }

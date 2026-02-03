@@ -25,8 +25,13 @@ export default function HomeSummary() {
     getMonthlyRanking(mes).then(setRanking);
   }, [user, fecha, mes]);
 
-  // Ejemplo de cálculo de puntos y racha
-  const puntosHoy = (activity?.puntos || 0) + (meals ? Object.values(meals).reduce((acc, m) => acc + (m?.puntuacion || 0), 0) : 0);
+  // Suma puntos de comidas + hábitos diarios (caminar, correr, gimnasio)
+  const puntosHabitos =
+    (activity?.caminar ? 1 : 0) +
+    (activity?.correr ? 1 : 0) +
+    (activity?.gym ? 1 : 0);
+  const puntosComidas = meals ? Object.values(meals).reduce((acc, m) => acc + (m?.puntuacion || 0), 0) : 0;
+  const puntosHoy = puntosHabitos + puntosComidas;
   const racha = activity?.racha || 0;
   const peso = progress?.peso || '-';
   const rankingPos = ranking?.usuarios?.find(u => u.userId === user?.uid)?.posicion || '-';
