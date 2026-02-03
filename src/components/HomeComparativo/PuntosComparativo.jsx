@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useUserNames } from '../../hooks/useUserNames';
 import { getMonthlyRanking } from '../../services/ranking';
+import { getDailyActivity } from '../../services/habits';
+import { getDailyMeals } from '../../services/meals';
 import dayjs from 'dayjs';
 import { FaMedal, FaUserFriends, FaStar, FaBolt } from 'react-icons/fa';
 import { doc, getDoc } from 'firebase/firestore';
@@ -15,7 +17,7 @@ export default function PuntosComparativo({ usuarioId, companeroId }) {
   const hoy = dayjs().format('YYYY-MM-DD');
 
   useEffect(() => {
-    async function fetchHistorial() {
+    async function fetchHistorialYDia() {
       if (!usuarioId) return;
       // Leer puntosHistoricos de Firestore para usuario y compañero
       const userRef = doc(db, 'users', usuarioId);
@@ -49,8 +51,29 @@ export default function PuntosComparativo({ usuarioId, companeroId }) {
         compa: puntosHistoricosCompa[m] || 0
       }));
       setHistorial(historialData);
+
+      // --- NUEVO: Calcular puntos del día para usuario y compañero ---
+      // Usuario
+      let puntosDiaUsuario = 0;
+      const [activityUsuario, mealsUsuario] = await Promise.all([
+        getDailyActivity(usuarioId, hoy),
+        getDailyMeals(usuarioId, hoy)
+      ]);
+      puntosDiaUsuario = (activityUsuario?.puntos || 0) + (mealsUsuario ? Object.values(mealsUsuario).reduce((acc, m) => acc + (m?.puntuacion || 0), 0) : 0);
+      setUsuario(u => ({ ...u, puntosDia: puntosDiaUsuario }));
+
+      // Compañero
+      if (compaId) {
+        let puntosDiaCompa = 0;
+        const [activityCompa, mealsCompa] = await Promise.all([
+          getDailyActivity(compaId, hoy),
+          getDailyMeals(compaId, hoy)
+        ]);
+        puntosDiaCompa = (activityCompa?.puntos || 0) + (mealsCompa ? Object.values(mealsCompa).reduce((acc, m) => acc + (m?.puntuacion || 0), 0) : 0);
+        setCompanero(c => ({ ...c, puntosDia: puntosDiaCompa }));
+      }
     }
-    fetchHistorial();
+    fetchHistorialYDia();
   }, [usuarioId, companeroId, mes, hoy]);
 
   return (
