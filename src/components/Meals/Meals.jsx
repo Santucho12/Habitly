@@ -494,8 +494,28 @@ async function savePuntosMesToLocal(uid, overrideDay, overrideMeals) {
                   accept="image/*"
                   onChange={e => handleFoto(meal.key, e.target.files[0])}
                   className="mt-2 mb-2 text-xs text-gray-300"
-                  disabled={loading}
+                  disabled={loading || dayjs(selectedDay).isAfter(dayjs(), 'day')}
                 />
+                {dayjs(selectedDay).isAfter(dayjs(), 'day') && (
+                  <div className="text-xs text-yellow-400 font-semibold mt-1 text-center">
+                    {(() => {
+                      const dias = {
+                        monday: 'lunes',
+                        tuesday: 'martes',
+                        wednesday: 'miércoles',
+                        thursday: 'jueves',
+                        friday: 'viernes',
+                        saturday: 'sábado',
+                        sunday: 'domingo',
+                      };
+                      // dayjs().format('dddd') da el nombre en inglés, lo pasamos a minúsculas para el mapeo
+                      const diaEn = dayjs(selectedDay).format('dddd').toLowerCase();
+                      // Mapear a español
+                      const diaEs = dias[diaEn] || dayjs(selectedDay).format('dddd');
+                      return `No está habilitado hasta que sea ${diaEs}`;
+                    })()}
+                  </div>
+                )}
               </div>
               {meals[meal.key]?.permitido && (
                 <span className="text-xs font-semibold text-gray-300 mt-1">Permitido: no suma ni resta puntos</span>

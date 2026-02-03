@@ -130,6 +130,7 @@ export default function ProgressPhotoCompare() {
                     <form className="w-56 h-80 flex flex-col items-center justify-center bg-gray-700 rounded-xl border-2 border-dashed border-blue-400 text-gray-400 text-center gap-2 px-2"
                       onSubmit={async e => {
                         e.preventDefault();
+                        if (currentMonth !== dayjs().format('YYYY-MM')) return;
                         setError('');
                         if (!pesoInput || isNaN(Number(pesoInput))) {
                           setError('Ingresa un peso válido.');
@@ -170,7 +171,7 @@ export default function ProgressPhotoCompare() {
                         onChange={e => setPesoInput(e.target.value)}
                         className="rounded px-2 py-1 text-black w-full mb-1"
                         placeholder="Peso (kg)"
-                        disabled={saving}
+                        disabled={saving || currentMonth !== dayjs().format('YYYY-MM')}
                       />
                       <input
                         type="file"
@@ -187,17 +188,30 @@ export default function ProgressPhotoCompare() {
                           }
                         }}
                         className="w-full mb-1"
-                        disabled={saving}
+                        disabled={saving || currentMonth !== dayjs().format('YYYY-MM')}
                       />
                       {previewFoto && (
                         <img src={previewFoto} alt="Preview" className="w-32 h-32 object-cover rounded mb-1 mx-auto" />
                       )}
-                      <button type="submit" className="bg-blue-600 text-white rounded px-2 py-1 mt-1 font-bold text-sm hover:bg-blue-700 disabled:bg-gray-500 transition w-full" disabled={saving}>
+                      <button type="submit" className="bg-blue-600 text-white rounded px-2 py-1 mt-1 font-bold text-sm hover:bg-blue-700 disabled:bg-gray-500 transition w-full" disabled={saving || currentMonth !== dayjs().format('YYYY-MM')}>
                         {saving ? 'Guardando...' : 'Guardar'}
                       </button>
                       <button type="button" className="text-xs text-gray-300 mt-1 underline" onClick={() => { setShowForm(false); setError(''); }} disabled={saving}>
                         Cancelar
                       </button>
+                      {currentMonth !== dayjs().format('YYYY-MM') && (
+                        <div className="text-xs text-yellow-400 font-semibold mt-1 text-center">
+                          {(() => {
+                            const meses = [
+                              'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                              'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+                            ];
+                            const mesNum = Number(currentMonth.split('-')[1]) - 1;
+                            const mesEs = meses[mesNum] || '';
+                            return `No está habilitado hasta que sea ${mesEs}`;
+                          })()}
+                        </div>
+                      )}
                       {error && <div className="text-xs text-red-400 mt-1">{error}</div>}
                     </form>
                   ) : (

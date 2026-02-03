@@ -43,8 +43,10 @@ export default function ChecklistComparativo({ usuarioType = 'yo', usuarioId = n
       setHabits(habitsData);
       const todayData = await getDailyActivity(uid, today);
       setChecked(todayData && typeof todayData === 'object' ? todayData : {});
-      // Semana
-      const weekStart = dayjs().startOf('week');
+      // Semana: lunes a domingo de la semana actual
+      const todayDate = dayjs(today);
+      const dayOfWeek = todayDate.day(); // 0=domingo, 1=lunes, ...
+      const weekStart = dayOfWeek === 0 ? todayDate.subtract(6, 'day') : todayDate.startOf('week').add(1, 'day');
       let weekArr = [];
       for (let i = 0; i < 7; i++) {
         const d = weekStart.add(i, 'day').format('YYYY-MM-DD');
