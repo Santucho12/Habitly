@@ -20,8 +20,34 @@ async function savePuntosMesToLocal(uid) {
   const puntosMes = comidas + habitos + progreso + logros;
   const data = { mes, puntosMes, desglose: { comidas, habitos, progreso, logros } };
   localStorage.setItem('puntosMes', JSON.stringify(data));
+  // Guardar desgloseMes en Firestore para el usuario
+  try {
+    const { doc, setDoc } = await import('firebase/firestore');
+    const { db } = await import('../services/firebase');
+    await setDoc(doc(db, 'users', uid), { desgloseMes: { comidas, habitos, progreso, logros } }, { merge: true });
+  } catch (e) {
+    console.error('Error guardando desgloseMes en Firestore:', e);
+  }
+  // Si el usuario tiene compañero, también recalcular y guardar para el compañero
+  try {
+    const { doc, getDoc, setDoc } = await import('firebase/firestore');
+    const { db } = await import('../services/firebase');
+    const userSnap = await getDoc(doc(db, 'users', uid));
+    if (userSnap.exists()) {
+      const compaId = userSnap.data().companeroId;
+      if (compaId) {
+        const comidasC = await getMonthlyMeals(compaId, mes);
+        const habitosC = await getMonthlyHabits(compaId, mes);
+        const progresoC = await getMonthlyProgressPoints(compaId, mes);
+        const logrosC = await getMonthlyLogros(compaId, mes);
+        await setDoc(doc(db, 'users', compaId), { desgloseMes: { comidas: comidasC, habitos: habitosC, progreso: progresoC, logros: logrosC } }, { merge: true });
+      }
+    }
+  } catch (e) {
+    console.error('Error guardando desgloseMes para compañero en Firestore:', e);
+  }
   // Log para debug
-  console.log('[Habitly][Stats] Puntos recalculados y guardados en localStorage:', data);
+  console.log('[Habitly][Stats] Puntos recalculados y guardados en localStorage y Firestore:', data);
 }
 import { getAllUsers } from '../services/users';
 import dayjs from 'dayjs';
@@ -155,7 +181,7 @@ export default function StatsPage() {
       // Leer desgloseMes de Firestore para compañero
       const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
-      let desgloseCompa = { habitos: 0, comidas: 0 };
+      let desgloseCompa = { habitos: 0, comidas: 0, progreso: 0, logros: 0 };
       let compaId = null;
       if (userSnap.exists()) {
         compaId = userSnap.data().companeroId;
@@ -164,16 +190,25 @@ export default function StatsPage() {
         const compaRef = doc(db, 'users', compaId);
         const compaSnap = await getDoc(compaRef);
         if (compaSnap.exists()) {
-          desgloseCompa = compaSnap.data().desgloseMes || { habitos: 0, comidas: 0 };
+          const raw = compaSnap.data().desgloseMes;
+          console.log('[Habitly][Stats] desgloseMes compañero leído de Firestore:', raw);
+          // Asegurar que todos los campos existen y son números
+          desgloseCompa = {
+            habitos: typeof raw?.habitos === 'number' ? raw.habitos : 0,
+            comidas: typeof raw?.comidas === 'number' ? raw.comidas : 0,
+            progreso: typeof raw?.progreso === 'number' ? raw.progreso : 0,
+            logros: typeof raw?.logros === 'number' ? raw.logros : 0
+          };
         }
       }
+      console.log('[Habitly][Stats] desgloseYo:', desgloseYo, 'desgloseCompa:', desgloseCompa);
       setDesglose({
         yo: { ...desgloseYo },
         compa: { ...desgloseCompa }
       });
     }
     fetchDesgloseMes();
-  }, [mes, user]);
+  }, [mes, user, localPuntos]);
 
   // Logros y rachas (simulado)
   const logrosYo = yo?.logros || ['Top 1', 'Racha 3 meses'];

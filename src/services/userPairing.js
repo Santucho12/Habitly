@@ -9,11 +9,13 @@ export async function linkUsers(userAId, userBId) {
   await Promise.all([
     updateDoc(doc(db, 'users', userAId), {
       pairId,
-      companeroId: userBId // campo correcto
+      companeroId: userBId,
+      companionId: userBId
     }),
     updateDoc(doc(db, 'users', userBId), {
       pairId,
-      companeroId: userAId // campo correcto
+      companeroId: userAId,
+      companionId: userAId
     })
   ]);
   return pairId;
