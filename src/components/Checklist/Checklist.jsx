@@ -82,42 +82,21 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
   }, [user, today]);
 
   const handleCheck = async (key) => {
-    if (checked[key]) return; // No desmarcar
-    // Solo se puede marcar el día actual
+    // Solo se puede marcar/desmarcar el día actual
     if (dayjs().format('YYYY-MM-DD') !== today) {
-      setError('Solo puedes marcar actividades del día actual.');
+      setError('Solo puedes modificar actividades del día actual.');
       return;
     }
-    // Validar meta semanal (no más de lo permitido)
     const habit = habits.find(h => h.type === key || h.name?.toLowerCase() === key);
     if (!habit) {
       setError('No tienes meta para esta actividad.');
       return;
     }
-    // Buscar cuántas veces ya marcó esta actividad en la semana
-    const weekStart = dayjs().startOf('week');
-    let count = 0;
-    for (let i = 0; i < 7; i++) {
-      const d = weekStart.add(i, 'day').format('YYYY-MM-DD');
-      // eslint-disable-next-line no-await-in-loop
-      const act = await getDailyActivity(user.uid, d);
-      if (act && act[key]) count++;
-    }
-    if (count >= (habit.meta || habit.goal || 1)) {
-      setError('Ya alcanzaste la meta semanal para esta actividad.');
-      return;
-    }
-
-    // Guardar actividad diaria
-    const newChecked = { ...checked, [key]: true };
+    // Toggle: si está marcado, desmarca; si no, marca
+    const newChecked = { ...checked, [key]: !checked[key] };
     setChecked(newChecked);
     setError('');
     await saveDailyActivity(user.uid, today, newChecked);
-    // Recalcular y guardar puntos del mes en localStorage
-    const mes = dayjs().format('YYYY-MM');
-    // Ya no es necesario llamar aquí, el listener global lo recalcula automáticamente
-  // Función para recalcular y guardar puntos del mes en localStorage
-
 
     // --- Lógica de puntos y rachas ---
     // Obtener datos previos del usuario
@@ -199,7 +178,6 @@ export default function Checklist({ showAddHabitForm = true, fecha }) {
                     type="checkbox"
                     checked={!!checked[habit.type] || !!checked[nameLower]}
                     onChange={() => handleCheck(habit.type || nameLower)}
-                    disabled={!!checked[habit.type] || !!checked[nameLower]}
                     className={`w-6 h-6 transition-all duration-200 ${badgeColor}`}
                   />
                   <span className="font-bold text-white text-lg tracking-wide">{habit.name}</span>

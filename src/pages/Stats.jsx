@@ -258,14 +258,14 @@ export default function StatsPage() {
       {/* 2. Puntos totales del mes (estética mejorada) */}
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-blue-400 mb-4 tracking-wide text-center">Puntos totales del mes</h3>
-          <div className="flex flex-row gap-1 sm:gap-4 justify-center w-full">
-            <div className="bg-gradient-to-br from-blue-700 to-blue-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
+        <div className="flex flex-row gap-1 sm:gap-4 justify-center w-full">
+          <div className="bg-gradient-to-br from-blue-700 to-blue-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-blue-200 text-lg mb-2">{myName}</span>
-            <span className="text-4xl font-bold text-white drop-shadow">{puntosTotales.yo}</span>
+            <span className="text-4xl font-bold text-white drop-shadow">{historial.length > 0 ? historial[historial.length-1].yo : 0}</span>
           </div>
-            <div className="bg-gradient-to-br from-green-700 to-green-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
+          <div className="bg-gradient-to-br from-green-700 to-green-900 shadow-lg rounded-2xl px-2 py-2 sm:px-6 sm:py-5 flex flex-col items-center w-full max-w-[400px]">
             <span className="font-semibold text-green-200 text-lg mb-2">{companionName}</span>
-            <span className="text-4xl font-bold text-white drop-shadow">{puntosTotales.compa}</span>
+            <span className="text-4xl font-bold text-white drop-shadow">{historial.length > 0 ? historial[historial.length-1].compa : 0}</span>
           </div>
         </div>
       </div>
