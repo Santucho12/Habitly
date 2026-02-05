@@ -116,7 +116,9 @@ export default function ComidasComparativo({ usuarioType = 'yo', usuarioId = nul
       // Filtrar solo los del usuario
       const userDocs = allDocs.docs.filter(doc => doc.id.startsWith(usuarioId + '_'));
       // Siempre mostrar 4 cards (desayuno, almuerzo, merienda, cena)
-      const hoy = new Date().toISOString().slice(0, 10);
+      // Usar la hora local para definir el día actual (reinicio a las 00:00 locales)
+      const now = new Date();
+      const hoy = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
       const baseComidas = [
         { key: 'desayuno', titulo: 'Desayuno' },
         { key: 'almuerzo', titulo: 'Almuerzo' },
