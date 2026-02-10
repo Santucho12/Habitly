@@ -1,5 +1,6 @@
 // Funciones para obtener los puntos reales de cada usuario en el mes actual
 import { getDailyMeals } from '../services/meals';
+import { getWeeklyMealPoints } from '../services/weeklyMealStats';
 import { getMonthlyProgress } from '../services/progress';
 import { getDailyActivity } from '../services/habits';
 import { getUserLogros } from '../services/logros';
@@ -40,18 +41,31 @@ export async function getMonthlyHabits(uid, mes) {
 // Suma puntos de comidas del mes
 // Permite override de un día y comidas para feedback inmediato
 export async function getMonthlyMeals(uid, mes, overrideDay, overrideMeals) {
+  // 1. Sumar puntos de historial semanal guardado
   let total = 0;
+  const historialSemanal = await getWeeklyMealPoints(uid, mes);
+  if (historialSemanal && historialSemanal.length > 0) {
+    total += historialSemanal.reduce((acc, s) => acc + (s.points || 0), 0);
+  }
+  // 2. Sumar puntos de los días de la semana actual (no guardados aún)
   const fechas = getAllDatesOfMonth(mes);
-  for (const fecha of fechas) {
+  // Filtrar días que no están en historial semanal (semana actual)
+  // Suponemos que weekKey es el lunes de cada semana: 'YYYY-MM-DD'
+  // Obtenemos las fechas de la semana actual
+  // const dayjs = require('dayjs'); // Removed: use ES import at top
+  const today = dayjs();
+  const semanaActual = fechas.filter(f => {
+    // Si la fecha es de la semana actual (según today)
+    return dayjs(f).isSame(today, 'week');
+  });
+  for (const fecha of semanaActual) {
     let data;
     if (overrideDay && overrideMeals && fecha === overrideDay) {
-      // Usar override local para el día editado
       data = overrideMeals;
     } else {
       data = await getDailyMeals(uid, fecha);
     }
     if (data) {
-      // Sumar puntos de comidas según lógica real
       const comidas = ['desayuno','almuerzo','merienda','cena'].map(key => data[key] || {});
       total += calcularPuntosDia({
         gym: false,

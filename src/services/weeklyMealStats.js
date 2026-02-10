@@ -1,6 +1,6 @@
 // Servicio para guardar puntos semanales de comida
 import { db } from './firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
 
 // Guarda el total de puntos de comida de una semana para un usuario
 export async function saveWeeklyMealPoints(userId, weekKey, points) {
@@ -13,7 +13,15 @@ export async function saveWeeklyMealPoints(userId, weekKey, points) {
   });
 }
 
-// Obtiene el historial de puntos semanales de comida de un usuario
-export async function getWeeklyMealPoints(userId) {
-  // ...se puede implementar según necesidad
+export async function getWeeklyMealPoints(userId, mes) {
+  // mes: 'YYYY-MM' para filtrar solo semanas de ese mes
+  const col = collection(db, 'weeklyMealStats');
+  let q = query(col, where('userId', '==', userId));
+  const snap = await getDocs(q);
+  // Filtrar por mes si se pasa
+  let docs = snap.docs.map(doc => doc.data());
+  if (mes) {
+    docs = docs.filter(d => d.weekKey && d.weekKey.startsWith(mes));
+  }
+  return docs;
 }
