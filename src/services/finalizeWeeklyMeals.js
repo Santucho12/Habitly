@@ -1,3 +1,25 @@
+import { getAllUsers } from './users';
+import { getWeeklyMealPoints } from './weeklyMealStats';
+
+// Procesa todas las semanas de todos los usuarios, sumando puntos antes de borrar meals
+export async function finalizeAllWeeksBeforeDelete() {
+  const users = await getAllUsers();
+  for (const user of users) {
+    // Buscar todas las semanas del mes actual y anteriores
+    // Suponemos que weekStartDate es el lunes de cada semana
+    // Buscar meals existentes para el usuario
+    // Obtiene todas las semanas con meals para el usuario
+    const { getWeeksWithMeals } = require('./meals');
+    const semanas = await getWeeksWithMeals(user.uid);
+    for (const weekStartDate of semanas) {
+      // Evitar duplicados en historial
+      const historial = await getWeeklyMealPoints(user.uid);
+      if (!historial.some(h => h.weekKey === weekStartDate)) {
+        await finalizeWeeklyMeals(user.uid, weekStartDate);
+      }
+    }
+  }
+}
 import { getDailyMeals } from './meals';
 import { saveWeeklyMealPoints } from './weeklyMealStats';
 import { deleteDoc, doc } from 'firebase/firestore';

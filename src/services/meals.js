@@ -1,3 +1,21 @@
+import { collection, getDocs } from 'firebase/firestore';
+// Obtiene todas las fechas de inicio de semana (lunes) con meals para un usuario
+export async function getWeeksWithMeals(userId) {
+	const col = collection(db, 'meals');
+	const snap = await getDocs(col);
+	// Filtrar meals por usuario
+	const docs = snap.docs.map(doc => doc.data()).filter(d => d.userId === userId);
+	// Obtener todas las fechas
+	const fechas = docs.map(d => d.fecha);
+	// Agrupar por semana (lunes)
+	const semanas = new Set();
+	for (const fecha of fechas) {
+		const day = dayjs(fecha);
+		const lunes = day.startOf('week').add(1, 'day').format('YYYY-MM-DD'); // lunes de esa semana
+		semanas.add(lunes);
+	}
+	return Array.from(semanas);
+}
 import { storage } from './firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 // Sube una foto de comida a Firebase Storage y devuelve la URL

@@ -1,5 +1,3 @@
-
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -7,12 +5,12 @@ import * as yup from 'yup';
 import { auth } from '../services/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Link, useNavigate } from 'react-router-dom';
+import { finalizeAllWeeksBeforeDelete } from '../services/finalizeWeeklyMeals';
 
 const schema = yup.object().shape({
   email: yup.string().email('Email inválido').required('Email es requerido'),
   password: yup.string().required('Contraseña es requerida'),
 });
-
 
 export default function Login() {
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: yupResolver(schema) });
@@ -24,6 +22,7 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
+      await finalizeAllWeeksBeforeDelete(); // Guardado automático de puntos semanales
       await signInWithEmailAndPassword(auth, data.email, data.password);
       navigate('/comparativo');
     } catch (e) {
